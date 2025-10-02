@@ -35,7 +35,7 @@ tokio = { version = "1", features = ["full"] }
 
 ## Quick Start
 
-> [!INFO]
+> [!NOTE]
 > These examples show the intended API design. Currently, all methods return stub/placeholder data.
 
 ```rust
