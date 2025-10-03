@@ -52,6 +52,30 @@ impl PaymentIntents {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum PaymentMethod {
+    #[serde(rename = "card")]
+    Card,
+    #[serde(rename = "gcash")]
+    GCash,
+    #[serde(rename = "maya")]
+    Maya,
+    #[serde(rename = "qrph")]
+    QRPH,
+}
+
+impl PaymentMethod {
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Card => "card",
+            Self::GCash => "gcash",
+            Self::Maya => "maya",
+            Self::QRPH => "qrph",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PaymentMethodOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,18 +85,11 @@ pub struct PaymentMethodOptions {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capture_type: Option<CaptureType>,
+    pub capture_method: Option<CaptureMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allowed_bins: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allowed_funding: Option<Vec<String>>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum CaptureType {
-    Automatic,
-    Manual,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -149,7 +166,8 @@ pub enum PaymentIntentStatus {
 pub struct CreatePaymentIntent {
     pub amount: i64,
     pub currency: Currency,
-    pub payment_methods: Vec<String>,
+    #[serde(serialize_with = "serialize_payment_methods")]
+    pub payment_methods: Vec<PaymentMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -162,6 +180,21 @@ pub struct CreatePaymentIntent {
     pub statement_descriptor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_url: Option<String>,
+}
+
+fn serialize_payment_methods<S>(
+    methods: &[PaymentMethod],
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    use serde::ser::SerializeSeq;
+    let mut seq = serializer.serialize_seq(Some(methods.len()))?;
+    for method in methods {
+        seq.serialize_element(method.as_str())?;
+    }
+    seq.end()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -185,11 +218,11 @@ impl CapturePaymentIntent {
 
 impl CreatePaymentIntent {
     #[must_use]
-    pub fn new(amount: i64, currency: Currency, payment_methods: Vec<String>) -> Self {
+    pub fn new(amount: i64, currency: Currency, payment_methods: &[PaymentMethod]) -> Self {
         Self {
             amount,
             currency,
-            payment_methods,
+            payment_methods: payment_methods.to_vec(),
             description: None,
             metadata: None,
             capture_method: None,
@@ -242,26 +275,28 @@ mod tests {
 
     #[test]
     fn test_create_payment_intent_builder() {
-        let payment_methods = vec!["card".to_string(), "gcash".to_string()];
-        let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods.clone())
+        use PaymentMethod::*;
+        let payment_methods = &[Card, GCash];
+        let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)
             .description("Test payment")
             .capture_method(CaptureMethod::Manual);
 
         assert_eq!(params.amount, 10000);
         assert_eq!(params.currency, Currency::PHP);
-        assert_eq!(params.payment_methods, payment_methods);
+        assert_eq!(params.payment_methods, vec![Card, GCash]);
         assert_eq!(params.description, Some("Test payment".to_string()));
         assert_eq!(params.capture_method, Some(CaptureMethod::Manual));
     }
 
     #[test]
     fn test_create_payment_intent_with_all_options() {
-        let payment_methods = vec!["card".to_string()];
+        use PaymentMethod::*;
+        let payment_methods = &[Card];
         let mut metadata = Metadata::new();
         metadata.insert("order_id", "12345");
 
         let card_options = CardOptions {
-            capture_type: Some(CaptureType::Manual),
+            capture_method: Some(CaptureMethod::Manual),
             allowed_bins: Some(vec!["123456".to_string()]),
             allowed_funding: Some(vec!["credit".to_string()]),
         };
@@ -313,15 +348,60 @@ mod tests {
     }
 
     #[test]
-    fn test_capture_type_serialization() {
+    fn test_capture_method_serialization() {
         use serde_json;
 
-        let capture_type = CaptureType::Automatic;
-        let json = serde_json::to_string(&capture_type).unwrap();
+        let capture_method = CaptureMethod::Automatic;
+        let json = serde_json::to_string(&capture_method).unwrap();
         assert_eq!(json, "\"automatic\"");
 
-        let capture_type = CaptureType::Manual;
-        let json = serde_json::to_string(&capture_type).unwrap();
+        let capture_method = CaptureMethod::Manual;
+        let json = serde_json::to_string(&capture_method).unwrap();
         assert_eq!(json, "\"manual\"");
+    }
+
+    #[test]
+    fn test_payment_method_serialization() {
+        use PaymentMethod::*;
+        use serde_json;
+
+        // Test individual payment methods
+        let method = Card;
+        let json = serde_json::to_string(&method).unwrap();
+        assert_eq!(json, "\"card\"");
+
+        let method = GCash;
+        let json = serde_json::to_string(&method).unwrap();
+        assert_eq!(json, "\"gcash\"");
+
+        let method = Maya;
+        let json = serde_json::to_string(&method).unwrap();
+        assert_eq!(json, "\"maya\"");
+
+        let method = QRPH;
+        let json = serde_json::to_string(&method).unwrap();
+        assert_eq!(json, "\"qrph\"");
+
+        // Test as_str method
+        assert_eq!(Card.as_str(), "card");
+        assert_eq!(GCash.as_str(), "gcash");
+        assert_eq!(Maya.as_str(), "maya");
+        assert_eq!(QRPH.as_str(), "qrph");
+    }
+
+    #[test]
+    fn test_payment_methods_in_create_intent() {
+        use PaymentMethod::*;
+        use serde_json;
+
+        let params = CreatePaymentIntent::new(10000, Currency::PHP, &[Card, GCash, Maya]);
+        let json = serde_json::to_value(&params).unwrap();
+
+        // Verify payment_methods serializes as array of strings
+        let methods = json["payment_methods"].as_array().unwrap();
+        assert_eq!(methods.len(), 3);
+        assert_eq!(methods[0].as_str().unwrap(), "card");
+        assert_eq!(methods[1].as_str().unwrap(), "gcash");
+        assert_eq!(methods[2].as_str().unwrap(), "maya");
     }
 }

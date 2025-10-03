@@ -8,7 +8,7 @@
 //!
 //! Run with: cargo run --example basic_usage
 
-use payrex::resources::payment_intents::{CaptureMethod, CreatePaymentIntent};
+use payrex::resources::payment_intents::{CaptureMethod, CreatePaymentIntent, PaymentMethod};
 use payrex::types::{Currency, Metadata};
 use payrex::{Client, Error, ErrorKind};
 
@@ -26,7 +26,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     metadata.insert("order_id", "ORDER-12345");
     metadata.insert("customer_email", "customer@example.com");
 
-    let payment_methods = vec!["card".to_string(), "gcash".to_string(), "maya".to_string()];
+    use PaymentMethod::*;
+    let payment_methods = &[Card, GCash, Maya];
 
     let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)
         .description("Example payment for Order #12345")
