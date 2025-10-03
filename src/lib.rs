@@ -27,8 +27,8 @@ pub use config::{Config, ConfigBuilder};
 pub use error::{Error, ErrorKind, Result};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const API_BASE_URL: &str = "https://api.payrexhq.com/v1";
-pub const API_BASE_URL_TEST: &str = "https://api.payrexhq.com/v1";
+pub const API_BASE_URL: &str = "https://api.payrexhq.com/";
+pub const API_BASE_URL_TEST: &str = "https://api.payrexhq.com/";
 
 #[cfg(test)]
 mod tests {
