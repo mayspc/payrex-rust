@@ -3,9 +3,9 @@
 //! Checkout Sessions create a hosted payment page for collecting payment.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{CheckoutSessionId, Currency, Metadata, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

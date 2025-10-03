@@ -3,9 +3,9 @@
 //! Payouts represent transfers of funds to your bank account.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{List, ListParams, PayoutId, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

@@ -4,13 +4,13 @@
 //! authentication, request/response processing, and error handling.
 
 use crate::{
+    Result,
     config::Config,
     http::HttpClient,
     resources::{
         BillingStatements, CheckoutSessions, Customers, Events, PaymentIntents, Payments, Payouts,
         Refunds, Webhooks,
     },
-    Result,
 };
 use std::sync::Arc;
 

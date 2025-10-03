@@ -3,7 +3,7 @@
 //! This module provides configuration options for customizing the behavior
 //! of the PayRex client, including timeouts, retries, and API endpoints.
 
-use crate::{Error, Result, API_BASE_URL};
+use crate::{API_BASE_URL, Error, Result};
 use std::time::Duration;
 
 /// Configuration for the PayRex client.

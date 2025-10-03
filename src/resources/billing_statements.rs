@@ -3,9 +3,9 @@
 //! Billing Statements allow you to create and send invoices to customers.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{BillingStatementId, Currency, CustomerId, List, ListParams, Metadata, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

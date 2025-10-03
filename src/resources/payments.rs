@@ -3,9 +3,9 @@
 //! Payments represent successful payment transactions.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{Currency, Metadata, PaymentId, PaymentIntentId, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

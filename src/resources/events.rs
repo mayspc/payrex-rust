@@ -3,9 +3,9 @@
 //! Events represent changes to resources in your account.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{EventId, List, ListParams, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

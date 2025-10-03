@@ -4,9 +4,9 @@
 //! They track the lifecycle of a payment from creation through completion.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{Currency, Metadata, PaymentIntentId, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
