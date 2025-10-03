@@ -1,25 +1,24 @@
 //! Currency types for the PayRex SDK.
 //!
-//! PayRex primarily operates in Philippine Peso (PHP) but may support other currencies.
+//! PayRex currently only supports PHP (Philippine Peso).
 
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+/// Currency codes supported by PayRex.
+///
+/// **Note**: PayRex currently only supports PHP (Philippine Peso).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "UPPERCASE")]
 pub enum Currency {
-    #[serde(rename = "php")]
     PHP,
-    #[serde(rename = "usd")]
-    USD,
 }
 
 impl Currency {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::PHP => "php",
-            Self::USD => "usd",
+            Self::PHP => "PHP",
         }
     }
 
@@ -27,7 +26,6 @@ impl Currency {
     pub const fn symbol(self) -> &'static str {
         match self {
             Self::PHP => "₱",
-            Self::USD => "$",
         }
     }
 
@@ -35,7 +33,6 @@ impl Currency {
     pub const fn decimal_places(self) -> u8 {
         match self {
             Self::PHP => 2,
-            Self::USD => 2,
         }
     }
 
@@ -84,20 +81,17 @@ mod tests {
 
     #[test]
     fn test_currency_as_str() {
-        assert_eq!(Currency::PHP.as_str(), "php");
-        assert_eq!(Currency::USD.as_str(), "usd");
+        assert_eq!(Currency::PHP.as_str(), "PHP");
     }
 
     #[test]
     fn test_currency_symbol() {
         assert_eq!(Currency::PHP.symbol(), "₱");
-        assert_eq!(Currency::USD.symbol(), "$");
     }
 
     #[test]
     fn test_currency_decimal_places() {
         assert_eq!(Currency::PHP.decimal_places(), 2);
-        assert_eq!(Currency::USD.decimal_places(), 2);
     }
 
     #[test]
@@ -105,7 +99,6 @@ mod tests {
         assert_eq!(Currency::PHP.format_amount(10050), "₱100.50");
         assert_eq!(Currency::PHP.format_amount(100), "₱1.00");
         assert_eq!(Currency::PHP.format_amount(0), "₱0.00");
-        assert_eq!(Currency::USD.format_amount(12345), "$123.45");
     }
 
     #[test]
@@ -117,12 +110,12 @@ mod tests {
     fn test_currency_serialization() {
         let currency = Currency::PHP;
         let json = serde_json::to_string(&currency).unwrap();
-        assert_eq!(json, "\"php\"");
+        assert_eq!(json, "\"PHP\"");
     }
 
     #[test]
     fn test_currency_deserialization() {
-        let json = "\"php\"";
+        let json = "\"PHP\"";
         let currency: Currency = serde_json::from_str(json).unwrap();
         assert_eq!(currency, Currency::PHP);
     }

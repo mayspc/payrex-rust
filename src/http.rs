@@ -4,6 +4,7 @@
 //! rate limiting, and proper error handling for the PayRex API.
 
 use crate::{Config, Error, ErrorKind, Result};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest::{Client as ReqwestClient, RequestBuilder, Response, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 use std::time::Duration;
@@ -18,7 +19,9 @@ impl HttpClient {
     pub fn new(config: Config) -> Result<Self> {
         let mut headers = header::HeaderMap::new();
 
-        let auth_value = format!("Basic {}:", config.api_key());
+        let credentials = format!("{}:", config.api_key());
+        let encoded = general_purpose::STANDARD.encode(credentials.as_bytes());
+        let auth_value = format!("Basic {}", encoded);
         headers.insert(
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&auth_value)
@@ -29,6 +32,11 @@ impl HttpClient {
             header::USER_AGENT,
             header::HeaderValue::from_str(config.user_agent())
                 .map_err(|e| Error::Config(format!("Invalid user agent: {e}")))?,
+        );
+
+        headers.insert(
+            header::CONTENT_TYPE,
+            header::HeaderValue::from_static("application/x-www-form-urlencoded"),
         );
 
         let client = ReqwestClient::builder()
@@ -42,21 +50,24 @@ impl HttpClient {
 
     pub async fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.get(&url);
-        self.execute_with_retry(request).await
+        self.execute_with_retry(|| self.client.get(&url)).await
     }
 
     pub async fn post<B: Serialize, T: DeserializeOwned>(&self, path: &str, body: &B) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.post(&url).json(body);
-        self.execute_with_retry(request).await
+        let form_data = serde_qs::to_string(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry(|| self.client.post(&url).body(form_data.clone()))
+            .await
     }
 
     #[allow(dead_code)]
     pub async fn put<B: Serialize, T: DeserializeOwned>(&self, path: &str, body: &B) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.put(&url).json(body);
-        self.execute_with_retry(request).await
+        let form_data = serde_qs::to_string(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry(|| self.client.put(&url).body(form_data.clone()))
+            .await
     }
 
     pub async fn patch<B: Serialize, T: DeserializeOwned>(
@@ -65,14 +76,15 @@ impl HttpClient {
         body: &B,
     ) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.patch(&url).json(body);
-        self.execute_with_retry(request).await
+        let form_data = serde_qs::to_string(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry(|| self.client.patch(&url).body(form_data.clone()))
+            .await
     }
 
     pub async fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.delete(&url);
-        self.execute_with_retry(request).await
+        self.execute_with_retry(|| self.client.delete(&url)).await
     }
 
     fn build_url(&self, path: &str) -> Result<String> {
@@ -81,16 +93,18 @@ impl HttpClient {
         Ok(format!("{base}/{path}"))
     }
 
-    async fn execute_with_retry<T: DeserializeOwned>(&self, request: RequestBuilder) -> Result<T> {
+    async fn execute_with_retry<F, T>(&self, request_builder: F) -> Result<T>
+    where
+        F: Fn() -> RequestBuilder,
+        T: DeserializeOwned,
+    {
         let mut attempts = 0;
         let max_retries = self.config.max_retries();
 
         loop {
-            let req = request
-                .try_clone()
-                .ok_or_else(|| Error::Internal("Failed to clone request".to_string()))?;
+            let request = request_builder();
 
-            match self.execute_request(req).await {
+            match self.execute_request(request).await {
                 Ok(response) => return self.handle_response(response).await,
                 Err(e) if e.is_retryable() && attempts < max_retries => {
                     attempts += 1;

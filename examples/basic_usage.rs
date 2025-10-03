@@ -8,14 +8,14 @@
 //!
 //! Run with: cargo run --example basic_usage
 
-use payrex::resources::payment_intents::{CaptureMethod, CreatePaymentIntent};
+use payrex::resources::payment_intents::{CaptureMethod, CreatePaymentIntent, PaymentMethod};
 use payrex::types::{Currency, Metadata};
 use payrex::{Client, Error, ErrorKind};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api_key =
-        std::env::var("PAYREX_API_KEY").unwrap_or_else(|_| "your_secret_key_here".to_string());
+        std::env::var("PAYREX_API_KEY").unwrap_or_else(|_| "your_secret_api_key".to_string());
 
     let client = Client::new(api_key);
 
@@ -26,7 +26,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     metadata.insert("order_id", "ORDER-12345");
     metadata.insert("customer_email", "customer@example.com");
 
-    let params = CreatePaymentIntent::new(10000, Currency::PHP)
+    use PaymentMethod::*;
+    let payment_methods = &[Card, GCash, Maya];
+
+    let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)
         .description("Example payment for Order #12345")
         .capture_method(CaptureMethod::Automatic)
         .metadata(metadata);
