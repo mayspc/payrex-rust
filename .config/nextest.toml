@@ -1,0 +1,37 @@
+# Nextest configuration for cargo-nextest
+# https://nexte.st/book/configuration.html
+
+[profile.default]
+# Run tests with all available threads
+test-threads = "num-cpus"
+
+# Show output for failing tests only
+failure-output = "immediate-final"
+success-output = "never"
+
+# Retry failed tests once
+retries = 1
+
+[profile.ci]
+# CI profile - more verbose and strict
+test-threads = "num-cpus"
+
+# Show output for all tests in CI
+failure-output = "immediate-final"
+success-output = "final"
+
+# No retries in CI because we want to catch flaky tests
+retries = 0
+
+# Fail fast in CI
+fail-fast = false
+
+# Longer timeout for CI environments
+slow-timeout = { period = "60s", terminate-after = 2 }
+
+[profile.ci.junit]
+# JUnit XML output for CI
+path = "junit.xml"
+store-success-output = false
+store-failure-output = true
+
