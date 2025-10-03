@@ -4,8 +4,8 @@
 //! rate limiting, and proper error handling for the PayRex API.
 
 use crate::{Config, Error, ErrorKind, Result};
-use reqwest::{header, Client as ReqwestClient, RequestBuilder, Response, StatusCode};
-use serde::{de::DeserializeOwned, Serialize};
+use reqwest::{Client as ReqwestClient, RequestBuilder, Response, StatusCode, header};
+use serde::{Serialize, de::DeserializeOwned};
 use std::time::Duration;
 
 /// HTTP client for making requests to the PayRex API.

@@ -9,13 +9,3 @@ use_small_heuristics = "Default"
 reorder_imports = true
 reorder_modules = true
 remove_nested_parens = true
-format_strings = true
-format_macro_matchers = true
-format_macro_bodies = true
-normalize_comments = true
-normalize_doc_attributes = true
-wrap_comments = true
-comment_width = 80
-imports_granularity = "Crate"
-group_imports = "StdExternalCrate"
-

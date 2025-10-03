@@ -4,9 +4,9 @@
 //! multiple payments and billing information.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{Currency, CustomerId, List, ListParams, Metadata, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

@@ -3,9 +3,9 @@
 //! Refunds allow you to return money to a customer.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{Currency, Metadata, PaymentId, RefundId, Timestamp},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

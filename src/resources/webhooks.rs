@@ -3,9 +3,9 @@
 //! Webhooks allow you to receive real-time notifications about events.
 
 use crate::{
+    Result,
     http::HttpClient,
     types::{List, ListParams, Timestamp, WebhookId},
-    Result,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
