@@ -18,7 +18,7 @@ impl HttpClient {
     pub fn new(config: Config) -> Result<Self> {
         let mut headers = header::HeaderMap::new();
 
-        let auth_value = format!("Bearer {}", config.api_key());
+        let auth_value = format!("Basic {}:", config.api_key());
         headers.insert(
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&auth_value)
