@@ -12,7 +12,7 @@ env:
 
 jobs:
   test:
-    name: Test Suite
+    name: tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -45,14 +45,27 @@ jobs:
           path: target
           key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run tests
-        run: cargo test --all-features --verbose
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Run tests with JUnit output
+        run: cargo nextest run --all-features --profile ci --junit-output-path junit.xml
+
+      - name: Upload test results to Codecov
+        if: always()
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: junit.xml
+          fail_ci_if_error: false
 
       - name: Run doc tests
         run: cargo test --doc --all-features --verbose
 
   fmt:
-    name: Rust Formatting
+    name: format (rust)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -67,7 +80,7 @@ jobs:
         run: cargo fmt --all -- --check
 
   prettier:
-    name: Prettier Formatting
+    name: format (prettier)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -82,7 +95,7 @@ jobs:
         run: npx prettier --check "**/*.{yml,yaml,md,json}"
 
   clippy:
-    name: Clippy
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -115,7 +128,7 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   docs:
-    name: Documentation
+    name: docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -148,7 +161,7 @@ jobs:
           RUSTDOCFLAGS: -D warnings
 
   security:
-    name: Security Audit
+    name: security
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -164,7 +177,7 @@ jobs:
         run: cargo audit
 
   coverage:
-    name: Code Coverage
+    name: coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -176,32 +189,48 @@ jobs:
       - name: Install cargo-tarpaulin
         run: cargo install cargo-tarpaulin
 
-      - name: Generate coverage
-        run: cargo tarpaulin --out xml --all-features
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Generate coverage with JUnit
+        run: |
+          cargo tarpaulin --out xml --all-features
+          cargo nextest run --all-features --profile ci --junit-output-path junit.xml || true
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./cobertura.xml
           fail_ci_if_error: false
 
+      - name: Upload test results to Codecov
+        if: always()
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: junit.xml
+          fail_ci_if_error: false
+
   msrv:
-    name: Minimum Supported Rust Version
+    name: msrv
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install Rust 1.81.0
+      - name: Install Rust 1.90.0
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.81.0
+          toolchain: 1.90.0
 
       - name: Check MSRV
         run: cargo check --all-features
 
   examples:
-    name: Examples
+    name: examples
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -232,7 +261,7 @@ jobs:
         run: cargo check --examples --all-features
 
   dependencies:
-    name: Dependency Check
+    name: dependencies
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

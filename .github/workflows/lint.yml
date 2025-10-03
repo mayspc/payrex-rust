@@ -6,7 +6,7 @@ on:
 
 jobs:
   typos:
-    name: Check for Typos
+    name: typos
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,7 +16,7 @@ jobs:
         uses: crate-ci/typos@master
 
   markdown-lint:
-    name: Markdown Lint
+    name: markdown
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,7 +28,7 @@ jobs:
           globs: "**/*.md"
 
   yaml-lint:
-    name: YAML Lint
+    name: yaml
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

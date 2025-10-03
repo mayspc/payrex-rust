@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 keywords = ["payrex", "payment", "api", "sdk", "philippines"]
 categories = ["api-bindings", "web-programming"]
 readme = "README.md"
-rust-version = "1.81"
+rust-version = "1.90"
 
 [dependencies]
 # Async runtime
