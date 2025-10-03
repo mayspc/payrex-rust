@@ -28,6 +28,8 @@ impl Config {
             return Err(Error::InvalidApiKey("API key cannot be empty".to_string()));
         }
 
+        let test_mode = api_key.starts_with("sk_test_");
+
         Ok(Self {
             api_key,
             api_base_url: API_BASE_URL.to_string(),
@@ -35,7 +37,7 @@ impl Config {
             max_retries: 3,
             retry_delay: Duration::from_millis(500),
             user_agent: format!("payrex-rust/{}", crate::VERSION),
-            test_mode: false,
+            test_mode,
         })
     }
 
@@ -151,6 +153,12 @@ impl ConfigBuilder {
             return Err(Error::InvalidApiKey("API key cannot be empty".to_string()));
         }
 
+        let test_mode = if self.test_mode {
+            true
+        } else {
+            api_key.starts_with("sk_test_")
+        };
+
         Ok(Config {
             api_key,
             api_base_url: self
@@ -162,7 +170,7 @@ impl ConfigBuilder {
             user_agent: self
                 .user_agent
                 .unwrap_or_else(|| format!("payrex-rust/{}", crate::VERSION)),
-            test_mode: self.test_mode,
+            test_mode,
         })
     }
 }
@@ -206,5 +214,34 @@ mod tests {
         let result = Config::builder().timeout(Duration::from_secs(60)).build();
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_auto_detect_test_mode() {
+        let test_config = Config::new("sk_test_abc123").unwrap();
+        assert!(test_config.is_test_mode());
+
+        let live_config = Config::new("sk_live_abc123").unwrap();
+        assert!(!live_config.is_test_mode());
+
+        let other_config = Config::new("some_other_key").unwrap();
+        assert!(!other_config.is_test_mode());
+    }
+
+    #[test]
+    fn test_auto_detect_test_mode_builder() {
+        let test_config = Config::builder().api_key("sk_test_abc123").build().unwrap();
+        assert!(test_config.is_test_mode());
+
+        let live_config = Config::builder().api_key("sk_live_abc123").build().unwrap();
+        assert!(!live_config.is_test_mode());
+
+        // Explicit test_mode(true) overrides auto-detection
+        let explicit_config = Config::builder()
+            .api_key("sk_live_abc123")
+            .test_mode(true)
+            .build()
+            .unwrap();
+        assert!(explicit_config.is_test_mode());
     }
 }

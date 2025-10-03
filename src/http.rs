@@ -4,6 +4,7 @@
 //! rate limiting, and proper error handling for the PayRex API.
 
 use crate::{Config, Error, ErrorKind, Result};
+use base64::{Engine as _, engine::general_purpose};
 use reqwest::{Client as ReqwestClient, RequestBuilder, Response, StatusCode, header};
 use serde::{Serialize, de::DeserializeOwned};
 use std::time::Duration;
@@ -18,7 +19,10 @@ impl HttpClient {
     pub fn new(config: Config) -> Result<Self> {
         let mut headers = header::HeaderMap::new();
 
-        let auth_value = format!("Bearer {}", config.api_key());
+        // Use HTTP Basic Authentication (API key as username, empty password)
+        let credentials = format!("{}:", config.api_key());
+        let encoded = general_purpose::STANDARD.encode(credentials.as_bytes());
+        let auth_value = format!("Basic {}", encoded);
         headers.insert(
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&auth_value)
@@ -29,6 +33,11 @@ impl HttpClient {
             header::USER_AGENT,
             header::HeaderValue::from_str(config.user_agent())
                 .map_err(|e| Error::Config(format!("Invalid user agent: {e}")))?,
+        );
+
+        headers.insert(
+            header::CONTENT_TYPE,
+            header::HeaderValue::from_static("application/x-www-form-urlencoded"),
         );
 
         let client = ReqwestClient::builder()
@@ -42,21 +51,22 @@ impl HttpClient {
 
     pub async fn get<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.get(&url);
-        self.execute_with_retry(request).await
+        self.execute_with_retry_get(&url).await
     }
 
     pub async fn post<B: Serialize, T: DeserializeOwned>(&self, path: &str, body: &B) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.post(&url).json(body);
-        self.execute_with_retry(request).await
+        let serialized = serde_json::to_value(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry_form(&url, "POST", serialized).await
     }
 
     #[allow(dead_code)]
     pub async fn put<B: Serialize, T: DeserializeOwned>(&self, path: &str, body: &B) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.put(&url).json(body);
-        self.execute_with_retry(request).await
+        let serialized = serde_json::to_value(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry_form(&url, "PUT", serialized).await
     }
 
     pub async fn patch<B: Serialize, T: DeserializeOwned>(
@@ -65,14 +75,15 @@ impl HttpClient {
         body: &B,
     ) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.patch(&url).json(body);
-        self.execute_with_retry(request).await
+        let serialized = serde_json::to_value(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry_form(&url, "PATCH", serialized)
+            .await
     }
 
     pub async fn delete<T: DeserializeOwned>(&self, path: &str) -> Result<T> {
         let url = self.build_url(path)?;
-        let request = self.client.delete(&url);
-        self.execute_with_retry(request).await
+        self.execute_with_retry_get(&url).await
     }
 
     fn build_url(&self, path: &str) -> Result<String> {
@@ -81,16 +92,14 @@ impl HttpClient {
         Ok(format!("{base}/{path}"))
     }
 
-    async fn execute_with_retry<T: DeserializeOwned>(&self, request: RequestBuilder) -> Result<T> {
+    async fn execute_with_retry_get<T: DeserializeOwned>(&self, url: &str) -> Result<T> {
         let mut attempts = 0;
         let max_retries = self.config.max_retries();
 
         loop {
-            let req = request
-                .try_clone()
-                .ok_or_else(|| Error::Internal("Failed to clone request".to_string()))?;
+            let request = self.client.get(url);
 
-            match self.execute_request(req).await {
+            match self.execute_request(request).await {
                 Ok(response) => return self.handle_response(response).await,
                 Err(e) if e.is_retryable() && attempts < max_retries => {
                     attempts += 1;
@@ -98,6 +107,93 @@ impl HttpClient {
                     tokio::time::sleep(delay).await;
                 }
                 Err(e) => return Err(e),
+            }
+        }
+    }
+
+    async fn execute_with_retry_form<T: DeserializeOwned>(
+        &self,
+        url: &str,
+        method: &str,
+        body: serde_json::Value,
+    ) -> Result<T> {
+        let mut attempts = 0;
+        let max_retries = self.config.max_retries();
+
+        loop {
+            let request = match method {
+                "POST" => self.client.post(url),
+                "PUT" => self.client.put(url),
+                "PATCH" => self.client.patch(url),
+                _ => return Err(Error::Internal(format!("Unsupported method: {method}"))),
+            };
+
+            // Convert JSON value to form data
+            let request = if let Some(obj) = body.as_object() {
+                let mut form = Vec::new();
+                self.flatten_json_to_form("", obj, &mut form);
+                request.form(&form)
+            } else {
+                request.form(&body)
+            };
+
+            match self.execute_request(request).await {
+                Ok(response) => return self.handle_response(response).await,
+                Err(e) if e.is_retryable() && attempts < max_retries => {
+                    attempts += 1;
+                    let delay = self.calculate_retry_delay(attempts);
+                    tokio::time::sleep(delay).await;
+                }
+                Err(e) => return Err(e),
+            }
+        }
+    }
+
+    fn flatten_json_to_form(
+        &self,
+        prefix: &str,
+        obj: &serde_json::Map<String, serde_json::Value>,
+        form: &mut Vec<(String, String)>,
+    ) {
+        for (key, value) in obj {
+            let field_name = if prefix.is_empty() {
+                key.clone()
+            } else {
+                format!("{}[{}]", prefix, key)
+            };
+
+            match value {
+                serde_json::Value::Object(nested) => {
+                    self.flatten_json_to_form(&field_name, nested, form);
+                }
+                serde_json::Value::Array(arr) => {
+                    for (i, item) in arr.iter().enumerate() {
+                        if let serde_json::Value::Object(nested) = item {
+                            self.flatten_json_to_form(
+                                &format!("{}[{}]", field_name, i),
+                                nested,
+                                form,
+                            );
+                        } else {
+                            form.push((
+                                format!("{}[{}]", field_name, i),
+                                item.to_string().trim_matches('"').to_string(),
+                            ));
+                        }
+                    }
+                }
+                serde_json::Value::String(s) => {
+                    form.push((field_name, s.clone()));
+                }
+                serde_json::Value::Number(n) => {
+                    form.push((field_name, n.to_string()));
+                }
+                serde_json::Value::Bool(b) => {
+                    form.push((field_name, b.to_string()));
+                }
+                serde_json::Value::Null => {
+                    // Skip null values
+                }
             }
         }
     }

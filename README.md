@@ -9,7 +9,7 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
 
 - [x] Foundations
 - [ ] APIs
-  - [ ] Payment Intents
+  - [x] Payment Intents
   - [ ] Customers
   - [ ] Billing Statements
   - [ ] Checkout Sessions
@@ -39,15 +39,17 @@ tokio = { version = "1", features = ["full"] }
 
 ```rust
 use payrex::{Client, Currency};
-use payrex::resources::payment_intents::{CreatePaymentIntent, CaptureMethod};
+use payrex::resources::payment_intents::{CreatePaymentIntent, CaptureMethod, PaymentMethod};
 
 #[tokio::main]
 async fn main() -> Result<(), payrex::Error> {
     // Initialize the client with your API key
     let client = Client::new("your_secret_key");
 
-    // Create a payment intent (currently returns stub data)
-    let params = CreatePaymentIntent::new(10000, Currency::PHP)
+    // Create a payment intent with type-safe payment methods
+    use PaymentMethod::*;
+    let payment_methods = &[Card, Gcash];
+    let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)
         .description("Order #12345")
         .capture_method(CaptureMethod::Automatic);
 

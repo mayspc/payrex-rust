@@ -6,11 +6,9 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "UPPERCASE")]
 pub enum Currency {
-    #[serde(rename = "php")]
     PHP,
-    #[serde(rename = "usd")]
     USD,
 }
 
@@ -18,8 +16,8 @@ impl Currency {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::PHP => "php",
-            Self::USD => "usd",
+            Self::PHP => "PHP",
+            Self::USD => "USD",
         }
     }
 
@@ -84,8 +82,8 @@ mod tests {
 
     #[test]
     fn test_currency_as_str() {
-        assert_eq!(Currency::PHP.as_str(), "php");
-        assert_eq!(Currency::USD.as_str(), "usd");
+        assert_eq!(Currency::PHP.as_str(), "PHP");
+        assert_eq!(Currency::USD.as_str(), "USD");
     }
 
     #[test]
@@ -117,12 +115,12 @@ mod tests {
     fn test_currency_serialization() {
         let currency = Currency::PHP;
         let json = serde_json::to_string(&currency).unwrap();
-        assert_eq!(json, "\"php\"");
+        assert_eq!(json, "\"PHP\"");
     }
 
     #[test]
     fn test_currency_deserialization() {
-        let json = "\"php\"";
+        let json = "\"PHP\"";
         let currency: Currency = serde_json::from_str(json).unwrap();
         assert_eq!(currency, Currency::PHP);
     }
