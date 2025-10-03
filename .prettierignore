@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+target/
+
+# Build outputs
+dist/
+build/
+*.wasm
+
+# Lock files
+Cargo.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Internal/reference files
+internal/
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+

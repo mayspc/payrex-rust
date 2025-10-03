@@ -1,0 +1,17 @@
+[default]
+extend-ignore-re = [
+  "(?i)payrex",  # PayRex is our brand name
+]
+
+[files]
+extend-exclude = [
+  "Cargo.lock",
+  "target/",
+  "internal/",
+]
+
+[default.extend-words]
+# Add any project-specific words that should be ignored
+payrex = "payrex"
+PayRex = "PayRex"
+
