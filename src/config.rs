@@ -153,11 +153,7 @@ impl ConfigBuilder {
             return Err(Error::InvalidApiKey("API key cannot be empty".to_string()));
         }
 
-        let test_mode = if self.test_mode {
-            true
-        } else {
-            api_key.starts_with("sk_test_")
-        };
+        let test_mode = self.test_mode || api_key.starts_with("sk_test_");
 
         Ok(Config {
             api_key,

@@ -46,7 +46,7 @@ async fn main() -> Result<(), payrex::Error> {
     // Initialize the client with your API key
     let client = Client::new("your_secret_key");
 
-    // Create a payment intent with type-safe payment methods
+    // Create a payment intent
     use PaymentMethod::*;
     let payment_methods = &[Card, Gcash];
     let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)

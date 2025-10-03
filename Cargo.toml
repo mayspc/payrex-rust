@@ -38,6 +38,9 @@ url = { version = "2.5.7", features = ["serde"] }
 # Base64 encoding for HTTP Basic Auth
 base64 = "0.22"
 
+# Form encoding with nested structure support
+serde_qs = "0.13"
+
 [dev-dependencies]
 tokio-test = "0.4"
 mockito = "1.6"

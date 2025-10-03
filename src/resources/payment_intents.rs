@@ -167,7 +167,6 @@ pub enum PaymentIntentStatus {
 pub struct CreatePaymentIntent {
     pub amount: i64,
     pub currency: Currency,
-    #[serde(serialize_with = "serialize_payment_methods")]
     pub payment_methods: Vec<PaymentMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -181,21 +180,6 @@ pub struct CreatePaymentIntent {
     pub statement_descriptor: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_url: Option<String>,
-}
-
-fn serialize_payment_methods<S>(
-    methods: &[PaymentMethod],
-    serializer: S,
-) -> std::result::Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-{
-    use serde::ser::SerializeSeq;
-    let mut seq = serializer.serialize_seq(Some(methods.len()))?;
-    for method in methods {
-        seq.serialize_element(method.as_str())?;
-    }
-    seq.end()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
