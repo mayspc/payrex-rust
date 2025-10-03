@@ -26,7 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     metadata.insert("order_id", "ORDER-12345");
     metadata.insert("customer_email", "customer@example.com");
 
-    let params = CreatePaymentIntent::new(10000, Currency::PHP)
+    let payment_methods = vec!["card".to_string(), "gcash".to_string(), "maya".to_string()];
+
+    let params = CreatePaymentIntent::new(10000, Currency::PHP, payment_methods)
         .description("Example payment for Order #12345")
         .capture_method(CaptureMethod::Automatic)
         .metadata(metadata);
