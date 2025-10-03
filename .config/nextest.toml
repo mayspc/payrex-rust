@@ -29,3 +29,9 @@ fail-fast = false
 # Longer timeout for CI environments
 slow-timeout = { period = "60s", terminate-after = 2 }
 
+[profile.ci.junit]
+# JUnit XML output for CI
+path = "junit.xml"
+store-success-output = false
+store-failure-output = true
+

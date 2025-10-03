@@ -50,15 +50,15 @@ jobs:
         with:
           tool: cargo-nextest
 
-      - name: Run tests with JUnit output
-        run: cargo nextest run --all-features --profile ci --junit-output-path junit.xml
+      - name: Run tests
+        run: cargo nextest run --all-features --profile ci
 
       - name: Upload test results to Codecov
         if: always()
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: junit.xml
+          files: target/nextest/ci/junit.xml
           fail_ci_if_error: false
 
       - name: Run doc tests
@@ -197,7 +197,7 @@ jobs:
       - name: Generate coverage with JUnit
         run: |
           cargo tarpaulin --out xml --all-features
-          cargo nextest run --all-features --profile ci --junit-output-path junit.xml || true
+          cargo nextest run --all-features --profile ci || true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -211,7 +211,7 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: junit.xml
+          files: target/nextest/ci/junit.xml
           fail_ci_if_error: false
 
   msrv:

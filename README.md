@@ -92,7 +92,7 @@ See the [examples](examples/) directory for more usage examples:
 
 ## Requirements
 
-- Rust 1.81 or later
+- Rust 1.90 or later
 
 ## Contributing
 
