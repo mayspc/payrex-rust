@@ -116,8 +116,6 @@ impl HttpClient {
         }
     }
 
-
-
     async fn execute_request(&self, request: RequestBuilder) -> Result<Response> {
         request.send().await.map_err(|e| {
             if e.is_timeout() {
