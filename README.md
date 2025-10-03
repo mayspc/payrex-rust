@@ -5,7 +5,6 @@
 
 Unofficial Rust SDK for [PayRex](https://payrexhq.com)
 
-
 ## Roadmap
 
 - [x] Foundations
@@ -23,8 +22,8 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
   - [ ] Documentation improvements
   - [ ] Publish to crates.io
 
-
 ## Installation
+
 For now, you can use it from git:
 
 ```toml
@@ -63,7 +62,6 @@ async fn main() -> Result<(), payrex::Error> {
 
 ## Configuration
 
-
 ```rust
 use payrex::{Client, Config};
 use std::time::Duration;
@@ -94,15 +92,14 @@ See the [examples](examples/) directory for more usage examples:
 
 ## Requirements
 
-- Rust 1.75 or later
+- Rust 1.81 or later
 
 ## Contributing
 
-Contributions are welcome! This is an early-stage project, so there's plenty to do. 
+Contributions are welcome! This is an early-stage project, so there's plenty to do.
 
 Feel free to open issues or submit PRs!
 
 ---
 
 Built for the Rust and PayRex communities.
-

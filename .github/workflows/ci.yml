@@ -76,7 +76,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Check formatting with Prettier
         run: npx prettier --check "**/*.{yml,yaml,md,json}"
@@ -192,10 +192,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Install Rust 1.70.0
+      - name: Install Rust 1.81.0
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.70.0
+          toolchain: 1.81.0
 
       - name: Check MSRV
         run: cargo check --all-features
