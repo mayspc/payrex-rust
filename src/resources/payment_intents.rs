@@ -85,7 +85,7 @@ pub struct PaymentMethodOptions {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capture_method: Option<CaptureMethod>,
+    pub capture_type: Option<CaptureMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub allowed_bins: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -296,7 +296,7 @@ mod tests {
         metadata.insert("order_id", "12345");
 
         let card_options = CardOptions {
-            capture_method: Some(CaptureMethod::Manual),
+            capture_type: Some(CaptureMethod::Manual),
             allowed_bins: Some(vec!["123456".to_string()]),
             allowed_funding: Some(vec!["credit".to_string()]),
         };
