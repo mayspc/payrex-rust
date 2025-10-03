@@ -20,7 +20,7 @@ test-threads = "num-cpus"
 failure-output = "immediate-final"
 success-output = "final"
 
-# No retries in CI - we want to catch flaky tests
+# No retries in CI because we want to catch flaky tests
 retries = 0
 
 # Fail fast in CI
