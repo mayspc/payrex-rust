@@ -61,7 +61,7 @@ pub enum PaymentMethod {
     #[serde(rename = "maya")]
     Maya,
     #[serde(rename = "qrph")]
-    QRPH,
+    QRPh,
 }
 
 impl PaymentMethod {
@@ -71,7 +71,7 @@ impl PaymentMethod {
             Self::Card => "card",
             Self::GCash => "gcash",
             Self::Maya => "maya",
-            Self::QRPH => "qrph",
+            Self::QRPh => "qrph",
         }
     }
 }
@@ -363,7 +363,7 @@ mod tests {
         let json = serde_json::to_string(&method).unwrap();
         assert_eq!(json, "\"maya\"");
 
-        let method = QRPH;
+        let method = QRPh;
         let json = serde_json::to_string(&method).unwrap();
         assert_eq!(json, "\"qrph\"");
 
@@ -371,7 +371,7 @@ mod tests {
         assert_eq!(Card.as_str(), "card");
         assert_eq!(GCash.as_str(), "gcash");
         assert_eq!(Maya.as_str(), "maya");
-        assert_eq!(QRPH.as_str(), "qrph");
+        assert_eq!(QRPh.as_str(), "qrph");
     }
 
     #[test]
