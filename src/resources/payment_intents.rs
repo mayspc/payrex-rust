@@ -61,7 +61,7 @@ pub enum PaymentMethod {
     #[serde(rename = "maya")]
     Maya,
     #[serde(rename = "qrph")]
-    QRPH,
+    QRPh,
 }
 
 impl PaymentMethod {
@@ -71,7 +71,7 @@ impl PaymentMethod {
             Self::Card => "card",
             Self::GCash => "gcash",
             Self::Maya => "maya",
-            Self::QRPH => "qrph",
+            Self::QRPh => "qrph",
         }
     }
 }
@@ -114,12 +114,9 @@ pub struct PaymentError {
 pub struct PaymentIntent {
     pub id: PaymentIntentId,
     pub amount: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub amount_received: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub amount_capturable: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub client_secret: Option<String>,
+    pub amount_received: i64,
+    pub amount_capturable: i64,
+    pub client_secret: String,
     pub currency: Currency,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -132,12 +129,10 @@ pub struct PaymentIntent {
     pub last_payment_error: Option<PaymentError>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_method_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_methods: Option<Vec<String>>,
+    pub payment_methods: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_method_options: Option<PaymentMethodOptions>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub statement_descriptor: Option<String>,
+    pub statement_descriptor: String,
     pub status: PaymentIntentStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_action: Option<NextAction>,
@@ -146,8 +141,7 @@ pub struct PaymentIntent {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capture_before_at: Option<Timestamp>,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -363,7 +357,7 @@ mod tests {
         let json = serde_json::to_string(&method).unwrap();
         assert_eq!(json, "\"maya\"");
 
-        let method = QRPH;
+        let method = QRPh;
         let json = serde_json::to_string(&method).unwrap();
         assert_eq!(json, "\"qrph\"");
 
@@ -371,7 +365,7 @@ mod tests {
         assert_eq!(Card.as_str(), "card");
         assert_eq!(GCash.as_str(), "gcash");
         assert_eq!(Maya.as_str(), "maya");
-        assert_eq!(QRPH.as_str(), "qrph");
+        assert_eq!(QRPh.as_str(), "qrph");
     }
 
     #[test]

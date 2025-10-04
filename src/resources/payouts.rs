@@ -41,7 +41,6 @@ pub struct Payout {
     pub net_amount: Option<i64>,
     pub status: PayoutStatus,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<Timestamp>,
 }
 
