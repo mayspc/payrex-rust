@@ -110,8 +110,7 @@ pub struct BillingStatement {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer: Option<Metadata>,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

@@ -41,16 +41,14 @@ pub struct Refund {
     pub status: RefundStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
+    pub reason: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remarks: Option<String>,
     pub payment_id: PaymentId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -66,8 +64,7 @@ pub enum RefundStatus {
 pub struct CreateRefund {
     pub payment: PaymentId,
     pub amount: i64,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reason: Option<String>,
+    pub reason: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
 }

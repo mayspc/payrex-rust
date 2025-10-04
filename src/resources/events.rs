@@ -42,6 +42,5 @@ pub struct Event {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub previous_attributes: Option<Value>,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }

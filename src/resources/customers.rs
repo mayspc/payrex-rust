@@ -64,8 +64,7 @@ pub struct Customer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub next_billing_statement_sequence_number: Option<i64>,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
