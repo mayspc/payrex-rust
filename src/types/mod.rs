@@ -8,6 +8,7 @@ pub mod currency;
 pub mod ids;
 pub mod metadata;
 pub mod pagination;
+pub mod payment_methods;
 pub mod timestamp;
 
 // Re-export commonly used types
@@ -16,4 +17,5 @@ pub use currency::Currency;
 pub use ids::*;
 pub use metadata::Metadata;
 pub use pagination::{List, ListParams};
+pub use payment_methods::*;
 pub use timestamp::Timestamp;
