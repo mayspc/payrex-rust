@@ -8,8 +8,8 @@
 //!
 //! Run with: cargo run --example basic_usage
 
-use payrex::resources::payment_intents::{CaptureMethod, CreatePaymentIntent, PaymentMethod};
-use payrex::types::{Currency, Metadata};
+use payrex::resources::payment_intents::CreatePaymentIntent;
+use payrex::types::{CaptureMethod, Currency, Metadata, PaymentMethod};
 use payrex::{Client, Error, ErrorKind};
 
 #[tokio::main]

@@ -10,6 +10,7 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
 - [x] Foundations
 - [ ] APIs
   - [x] Payment Intents
+  - [x] Payments
   - [ ] Customers
   - [ ] Billing Statements
   - [ ] Checkout Sessions
