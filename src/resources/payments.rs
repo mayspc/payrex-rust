@@ -5,7 +5,7 @@
 use crate::{
     Result,
     http::HttpClient,
-    types::{Currency, Metadata, PaymentId, PaymentIntentId, Timestamp},
+    types::{Currency, Metadata, PaymentId, PaymentIntentId, PaymentMethod, Timestamp},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -37,7 +37,7 @@ pub struct Payment {
     pub id: PaymentId,
     pub amount: i64,
     pub amount_refunded: i64,
-    pub billing: Metadata, // TODO: add Billing type
+    pub billing: Billing,
     pub currency: Currency,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -51,10 +51,29 @@ pub struct Payment {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer: Option<Metadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_method: Option<Metadata>,
+    pub payment_method: Option<PaymentMethod>,
     pub refunded: bool,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Billing {
+    pub name: String,
+    pub email: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub phone: Option<String>,
+    pub address: Address,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Address {
+    pub line1: String,
+    pub line2: String,
+    pub city: String,
+    pub state: String,
+    pub postal_code: String,
+    pub country: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
