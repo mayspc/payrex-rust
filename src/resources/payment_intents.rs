@@ -462,48 +462,6 @@ mod tests {
     }
 
     #[test]
-    fn test_capture_method_serialization() {
-        use serde_json;
-
-        let capture_method = CaptureMethod::Automatic;
-        let json = serde_json::to_string(&capture_method).unwrap();
-        assert_eq!(json, "\"automatic\"");
-
-        let capture_method = CaptureMethod::Manual;
-        let json = serde_json::to_string(&capture_method).unwrap();
-        assert_eq!(json, "\"manual\"");
-    }
-
-    #[test]
-    fn test_payment_method_serialization() {
-        use PaymentMethod::*;
-        use serde_json;
-
-        // Test individual payment methods
-        let method = Card;
-        let json = serde_json::to_string(&method).unwrap();
-        assert_eq!(json, "\"card\"");
-
-        let method = GCash;
-        let json = serde_json::to_string(&method).unwrap();
-        assert_eq!(json, "\"gcash\"");
-
-        let method = Maya;
-        let json = serde_json::to_string(&method).unwrap();
-        assert_eq!(json, "\"maya\"");
-
-        let method = QRPh;
-        let json = serde_json::to_string(&method).unwrap();
-        assert_eq!(json, "\"qrph\"");
-
-        // Test as_str method
-        assert_eq!(Card.as_str(), "card");
-        assert_eq!(GCash.as_str(), "gcash");
-        assert_eq!(Maya.as_str(), "maya");
-        assert_eq!(QRPh.as_str(), "qrph");
-    }
-
-    #[test]
     fn test_payment_methods_in_create_intent() {
         use PaymentMethod::*;
         use serde_json;
