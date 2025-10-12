@@ -87,7 +87,6 @@ pub struct PaymentMethodTypes {
 pub enum PaymentStatus {
     Succeeded,
     Failed,
-    Pending,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -112,5 +111,86 @@ impl UpdatePayment {
     pub fn metadata(mut self, metadata: Metadata) -> Self {
         self.metadata = Some(metadata);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_update_payment_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("order_id".to_string(), "12345".to_string());
+
+        let params = UpdatePayment::new()
+            .description("Test payment")
+            .metadata(metadata.clone());
+
+        assert_eq!(params.description, Some("Test payment".to_string()));
+        assert_eq!(params.metadata, Some(metadata));
+    }
+
+    #[test]
+    fn test_payment_status_serialization() {
+        let status = PaymentStatus::Succeeded;
+        let serialized = serde_json::to_string(&status).unwrap();
+        assert_eq!(serialized, "\"succeeded\"");
+
+        let status = PaymentStatus::Failed;
+        let serialized = serde_json::to_string(&status).unwrap();
+        assert_eq!(serialized, "\"failed\"");
+    }
+
+    #[test]
+    fn test_address_serialization() {
+        let address = Address {
+            line1: "BGC".to_string(),
+            line2: Some("Apt 4B".to_string()),
+            city: "Taguig".to_string(),
+            state: "NCR".to_string(),
+            postal_code: "1635".to_string(),
+            country: "PH".to_string(),
+        };
+
+        let serialized = serde_json::to_string(&address).unwrap();
+        let expected = r#"{"line1":"BGC","line2":"Apt 4B","city":"Taguig","state":"NCR","postal_code":"1635","country":"PH"}"#;
+        assert_eq!(serialized, expected);
+    }
+
+    #[test]
+    fn test_billing_serialization() {
+        let address = Address {
+            line1: "BGC".to_string(),
+            line2: Some("Apt 4B".to_string()),
+            city: "Taguig".to_string(),
+            state: "NCR".to_string(),
+            postal_code: "1635".to_string(),
+            country: "PH".to_string(),
+        };
+
+        let billing = Billing {
+            name: "John Doe".to_string(),
+            email: "johndoe@gmail.com".to_string(),
+            phone: Some("1234567890".to_string()),
+            address,
+        };
+
+        let serialized = serde_json::to_string(&billing).unwrap();
+        let expected = r#"{"name":"John Doe","email":"johndoe@gmail.com","phone":"1234567890","address":{"line1":"BGC","line2":"Apt 4B","city":"Taguig","state":"NCR","postal_code":"1635","country":"PH"}}"#;
+
+        assert_eq!(serialized, expected);
+    }
+
+    #[test]
+    fn test_payment_method_types_serialization() {
+        let payment_method = PaymentMethodTypes {
+            _type: PaymentMethod::Card,
+        };
+
+        let serialized = serde_json::to_string(&payment_method).unwrap();
+        let expected = r#"{"type":"card"}"#;
+
+        assert_eq!(serialized, expected);
     }
 }
