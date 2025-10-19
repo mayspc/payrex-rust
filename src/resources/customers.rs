@@ -137,3 +137,43 @@ impl CreateCustomer {
         self
     }
 }
+
+impl UpdateCustomer {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn currency(mut self, currency: Currency) -> Self {
+        self.currency = Some(currency);
+        self
+    }
+
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    pub fn email(mut self, email: impl Into<String>) -> Self {
+        self.email = Some(email.into());
+        self
+    }
+
+    pub fn billing_statement_prefix(mut self, billing_statement_prefix: impl Into<String>) -> Self {
+        self.billing_statement_prefix = Some(billing_statement_prefix.into());
+        self
+    }
+
+    pub fn next_billing_statement_sequence_number(
+        mut self,
+        sequence_number: impl Into<String>,
+    ) -> Self {
+        self.next_billing_statement_sequence_number = Some(sequence_number.into());
+        self
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+}
