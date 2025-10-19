@@ -42,7 +42,7 @@ impl Customers {
             .await
     }
 
-    pub async fn list(&self, _params: ListParams) -> Result<List<Customer>> {
+    pub async fn list(&self, _params: CustomerListParams) -> Result<List<Customer>> {
         self.http.get("/customers").await
     }
 }
@@ -62,15 +62,30 @@ pub struct Customer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_billing_statement_sequence_number: Option<i64>,
+    pub next_billing_statement_sequence_number: Option<String>,
     pub created_at: Timestamp,
     pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CreateCustomer {
+    pub currency: Currency,
+    pub email: String,
+    pub name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub billing_statement_prefix: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_billing_statement_sequence_number: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Metadata>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct UpdateCustomer {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub billing_statement_prefix: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_billing_statement_sequence_number: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub currency: Option<Currency>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -82,11 +97,9 @@ pub struct CreateCustomer {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct UpdateCustomer {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub billing_statement_prefix: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub currency: Option<Currency>,
+pub struct CustomerListParams {
+    #[serde(flatten)]
+    pub list_params: ListParams,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
