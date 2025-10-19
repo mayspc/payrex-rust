@@ -71,9 +71,9 @@ pub struct ListParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub limit: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub starting_after: Option<String>,
+    pub after: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub ending_before: Option<String>,
+    pub before: Option<String>,
 }
 
 impl ListParams {
@@ -81,8 +81,8 @@ impl ListParams {
     pub const fn new() -> Self {
         Self {
             limit: None,
-            starting_after: None,
-            ending_before: None,
+            after: None,
+            before: None,
         }
     }
 
@@ -93,14 +93,14 @@ impl ListParams {
     }
 
     #[must_use]
-    pub fn starting_after(mut self, id: impl Into<String>) -> Self {
-        self.starting_after = Some(id.into());
+    pub fn after(mut self, id: impl Into<String>) -> Self {
+        self.after = Some(id.into());
         self
     }
 
     #[must_use]
-    pub fn ending_before(mut self, id: impl Into<String>) -> Self {
-        self.ending_before = Some(id.into());
+    pub fn before(mut self, id: impl Into<String>) -> Self {
+        self.before = Some(id.into());
         self
     }
 }
@@ -163,10 +163,10 @@ mod tests {
 
     #[test]
     fn test_list_params() {
-        let params = ListParams::new().limit(50).starting_after("obj_123");
+        let params = ListParams::new().limit(50).after("obj_123");
 
         assert_eq!(params.limit, Some(50));
-        assert_eq!(params.starting_after, Some("obj_123".to_string()));
+        assert_eq!(params.after, Some("obj_123".to_string()));
     }
 
     #[test]
