@@ -141,7 +141,7 @@ mod tests {
     fn test_payment_status_serialization() {
         let status = PaymentStatus::Paid;
         let serialized = serde_json::to_string(&status).unwrap();
-        assert_eq!(serialized, "\"succeeded\"");
+        assert_eq!(serialized, "\"paid\"");
 
         let status = PaymentStatus::Failed;
         let serialized = serde_json::to_string(&status).unwrap();
