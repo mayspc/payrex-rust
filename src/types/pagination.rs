@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct List<T> {
-    pub object: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub object: Option<String>,
     pub data: Vec<T>,
     pub has_more: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -19,7 +20,7 @@ impl<T> List<T> {
     #[must_use]
     pub fn empty() -> Self {
         Self {
-            object: "list".to_string(),
+            object: Some("list".to_string()),
             data: Vec::new(),
             has_more: false,
             next_page: None,
@@ -120,7 +121,7 @@ mod tests {
     #[test]
     fn test_list_with_data() {
         let list = List {
-            object: "list".to_string(),
+            object: Some("list".to_string()),
             data: vec!["item1".to_string(), "item2".to_string()],
             has_more: true,
             next_page: Some("next_url".to_string()),
@@ -136,7 +137,7 @@ mod tests {
     #[test]
     fn test_list_iteration() {
         let list = List {
-            object: "list".to_string(),
+            object: Some("list".to_string()),
             data: vec![1, 2, 3],
             has_more: false,
             next_page: None,
@@ -150,7 +151,7 @@ mod tests {
     #[test]
     fn test_list_into_iter() {
         let list = List {
-            object: "list".to_string(),
+            object: Some("list".to_string()),
             data: vec![1, 2, 3],
             has_more: false,
             next_page: None,
@@ -181,7 +182,7 @@ mod tests {
     #[test]
     fn test_list_serialization() {
         let list = List {
-            object: "list".to_string(),
+            object: Some("list".to_string()),
             data: vec![1, 2, 3],
             has_more: false,
             next_page: None,
