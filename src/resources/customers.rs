@@ -204,7 +204,7 @@ impl CustomerListParams {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Currency, CustomerId, Metadata, Timestamp};
+    use crate::types::{Currency, CustomerId, ListParams, Metadata, Timestamp};
     use serde_json;
 
     #[test]
@@ -253,6 +253,26 @@ mod tests {
             Some("003".to_string())
         );
         assert_eq!(params.metadata, Some(metadata));
+    }
+
+    #[test]
+    fn test_customer_list_params_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("key", "value");
+        let mut params = CustomerListParams::new()
+            .name("Name")
+            .email("user@example.com")
+            .metadata(metadata.clone());
+        params.list_params = ListParams::new()
+            .limit(20)
+            .after("cus_abc")
+            .before("cus_def");
+        assert_eq!(params.list_params.limit, Some(20));
+        assert_eq!(params.list_params.after.as_deref(), Some("cus_abc"));
+        assert_eq!(params.list_params.before.as_deref(), Some("cus_def"));
+        assert_eq!(params.name, Some("Name".to_string()));
+        assert_eq!(params.email, Some("user@example.com".to_string()));
+        assert_eq!(params.metadata.unwrap().get("key"), Some("value"));
     }
 
     #[test]
