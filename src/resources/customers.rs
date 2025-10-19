@@ -138,6 +138,7 @@ impl CreateCustomer {
     }
 }
 
+// TODO: maybe consider `derive_builder` crate
 impl UpdateCustomer {
     #[must_use]
     pub fn new() -> Self {
@@ -169,6 +170,28 @@ impl UpdateCustomer {
         sequence_number: impl Into<String>,
     ) -> Self {
         self.next_billing_statement_sequence_number = Some(sequence_number.into());
+        self
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+}
+
+impl CustomerListParams {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    pub fn email(mut self, email: impl Into<String>) -> Self {
+        self.email = Some(email.into());
         self
     }
 
