@@ -200,3 +200,106 @@ impl CustomerListParams {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{Currency, CustomerId, Metadata, Timestamp};
+    use serde_json;
+
+    #[test]
+    fn test_create_customer_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("order_id".to_string(), "12345".to_string());
+        let params = CreateCustomer::new(
+            Currency::PHP,
+            "test@example.com".to_string(),
+            "Test User".to_string(),
+        )
+        .billing_statement_prefix("PKYG9MA2")
+        .next_billing_statement_sequence_number("002")
+        .metadata(metadata.clone());
+        assert_eq!(params.currency, Currency::PHP);
+        assert_eq!(params.email, "test@example.com".to_string());
+        assert_eq!(params.name, "Test User".to_string());
+        assert_eq!(
+            params.billing_statement_prefix,
+            Some("PKYG9MA2".to_string())
+        );
+        assert_eq!(
+            params.next_billing_statement_sequence_number,
+            Some("002".to_string())
+        );
+        assert_eq!(params.metadata, Some(metadata));
+    }
+
+    #[test]
+    fn test_update_customer_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("key".to_string(), "value".to_string());
+        let params = UpdateCustomer::new()
+            .currency(Currency::PHP)
+            .email("user@example.com")
+            .name("User")
+            .billing_statement_prefix("BS")
+            .next_billing_statement_sequence_number("003")
+            .metadata(metadata.clone());
+        assert_eq!(params.currency, Some(Currency::PHP));
+        assert_eq!(params.email, Some("user@example.com".to_string()));
+        assert_eq!(params.name, Some("User".to_string()));
+        assert_eq!(params.billing_statement_prefix, Some("BS".to_string()));
+        assert_eq!(
+            params.next_billing_statement_sequence_number,
+            Some("003".to_string())
+        );
+        assert_eq!(params.metadata, Some(metadata));
+    }
+
+    #[test]
+    fn test_customer_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("order_id", "12345");
+        let customer = Customer {
+            id: CustomerId::new_unchecked("cus_123456"),
+            billing_statement_prefix: Some("PREF".to_string()),
+            currency: Some(Currency::PHP),
+            email: Some("test@example.com".to_string()),
+            livemode: false,
+            name: Some("Test User".to_string()),
+            metadata: Some(metadata.clone()),
+            next_billing_statement_sequence_number: Some("004".to_string()),
+            created_at: Timestamp::from_unix(1_609_459_200),
+            updated_at: Timestamp::from_unix(1_609_459_300),
+        };
+        let json = serde_json::to_value(&customer).unwrap();
+        assert_eq!(json["id"], "cus_123456");
+        assert_eq!(json["billing_statement_prefix"], "PREF");
+        assert_eq!(json["currency"], "PHP");
+        assert_eq!(json["email"], "test@example.com");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["name"], "Test User");
+        assert_eq!(json["metadata"]["order_id"], "12345");
+        assert_eq!(json["next_billing_statement_sequence_number"], "004");
+        assert_eq!(json["created_at"], 1_609_459_200);
+        assert_eq!(json["updated_at"], 1_609_459_300);
+    }
+
+    #[test]
+    fn test_customer_list_params_serialization() {
+        let json_in = r#"
+        {
+            "limit": 10,
+            "after": "cus_123",
+            "email": "user@example.com",
+            "name": "User Name",
+            "metadata": {"foo": "bar"}
+        }"#;
+        let params: CustomerListParams = serde_json::from_str(json_in).unwrap();
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["limit"], 10);
+        assert_eq!(json["after"], "cus_123");
+        assert_eq!(json["email"], "user@example.com");
+        assert_eq!(json["name"], "User Name");
+        assert_eq!(json["metadata"]["foo"], "bar");
+    }
+}
