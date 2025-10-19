@@ -85,7 +85,7 @@ pub struct UpdateCustomer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub billing_statement_prefix: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_billing_statement_sequence_number: Option<i64>,
+    pub next_billing_statement_sequence_number: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub currency: Option<Currency>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -106,4 +106,34 @@ pub struct CustomerListParams {
     pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+}
+
+impl CreateCustomer {
+    #[must_use]
+    pub fn new(currency: Currency, email: String, name: String) -> Self {
+        Self {
+            currency,
+            email,
+            name,
+            ..Default::default()
+        }
+    }
+
+    pub fn billing_statement_prefix(mut self, billing_statement_prefix: impl Into<String>) -> Self {
+        self.billing_statement_prefix = Some(billing_statement_prefix.into());
+        self
+    }
+
+    pub fn next_billing_statement_sequence_number(
+        mut self,
+        sequence_number: impl Into<String>,
+    ) -> Self {
+        self.next_billing_statement_sequence_number = Some(sequence_number.into());
+        self
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
 }
