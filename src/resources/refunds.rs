@@ -126,3 +126,116 @@ impl CreateRefund {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{Currency, Metadata, PaymentId, RefundId, Timestamp};
+    use serde_json;
+
+    #[test]
+    fn test_refund_status_serialization() {
+        assert_eq!(
+            serde_json::to_string(&RefundStatus::Pending).unwrap(),
+            "\"pending\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RefundStatus::Succeeded).unwrap(),
+            "\"succeeded\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RefundStatus::Failed).unwrap(),
+            "\"failed\""
+        );
+    }
+
+    #[test]
+    fn test_refund_reason_serialization() {
+        assert_eq!(
+            serde_json::to_string(&RefundReason::Fraudulent).unwrap(),
+            "\"fraudulent\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RefundReason::RequestedByCustomer).unwrap(),
+            "\"requested_by_customer\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RefundReason::WrongProductReceived).unwrap(),
+            "\"wrong_product_received\""
+        );
+        assert_eq!(
+            serde_json::to_string(&RefundReason::Others).unwrap(),
+            "\"others\""
+        );
+    }
+
+    #[test]
+    fn test_refund_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("key", "value");
+
+        let refund = Refund {
+            id: RefundId::new_unchecked("ref_123"),
+            amount: 1000,
+            currency: Currency::PHP,
+            livemode: false,
+            status: RefundStatus::Succeeded,
+            description: Some("desc".to_string()),
+            reason: RefundReason::Fraudulent,
+            remarks: Some("note".to_string()),
+            payment_id: PaymentId::new_unchecked("pay_456"),
+            metadata: Some(metadata.clone()),
+            created_at: Timestamp::from_unix(1_620_000_000),
+            updated_at: Timestamp::from_unix(1_620_001_000),
+        };
+
+        let json = serde_json::to_value(&refund).unwrap();
+
+        assert_eq!(json["id"], "ref_123");
+        assert_eq!(json["amount"], 1000);
+        assert_eq!(json["currency"], "PHP");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["status"], "succeeded");
+        assert_eq!(json["description"], "desc");
+        assert_eq!(json["reason"], "fraudulent");
+        assert_eq!(json["remarks"], "note");
+        assert_eq!(json["payment_id"], "pay_456");
+        assert_eq!(json["metadata"]["key"], "value");
+        assert_eq!(json["created_at"], 1_620_000_000);
+        assert_eq!(json["updated_at"], 1_620_001_000);
+    }
+
+    #[test]
+    fn test_create_refund_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("order", "1");
+
+        let params = CreateRefund::new(
+            PaymentId::new_unchecked("pay_abc"),
+            123,
+            Currency::PHP,
+            RefundReason::WrongProductReceived,
+        )
+        .metadata(metadata.clone())
+        .remarks("note")
+        .description("desc");
+        assert_eq!(params.payment_id.as_str(), "pay_abc");
+        assert_eq!(params.amount, 123);
+        assert_eq!(params.currency, Currency::PHP);
+        assert_eq!(params.reason, RefundReason::WrongProductReceived);
+        assert_eq!(params.metadata.unwrap().get("order"), Some("1"));
+        assert_eq!(params.remarks, Some("note".to_string()));
+        assert_eq!(params.description, Some("desc".to_string()));
+    }
+
+    #[test]
+    fn test_update_refund_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("foo", "bar");
+        let params = UpdateRefund {
+            metadata: Some(metadata.clone()),
+        };
+        let serialized = serde_json::to_string(&params).unwrap();
+        assert_eq!(serialized, r#"{"metadata":{"foo":"bar"}}"#);
+    }
+}
