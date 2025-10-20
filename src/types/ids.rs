@@ -69,10 +69,10 @@ macro_rules! define_id {
 // Define ID types for each resource
 define_id!(PaymentIntentId, "pi_", "Payment Intent ID");
 define_id!(CustomerId, "cus_", "Customer ID");
-define_id!(BillingStatementId, "bs_", "Billing Statement ID");
+define_id!(BillingStatementId, "bstm_", "Billing Statement ID");
 define_id!(
     BillingStatementLineItemId,
-    "bsli_",
+    "bstm_li_",
     "Billing Statement Line Item ID"
 );
 define_id!(CheckoutSessionId, "cs_", "Checkout Session ID");

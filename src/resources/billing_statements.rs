@@ -5,6 +5,7 @@
 use crate::{
     Result,
     http::HttpClient,
+    resources::billing_statement_line_items::BillingStatementLineItem,
     types::{BillingStatementId, Currency, CustomerId, List, ListParams, Metadata, Timestamp},
 };
 use serde::{Deserialize, Serialize};
@@ -183,7 +184,7 @@ pub struct BillingStatement {
 
     /// This attribute holds the billing statement's list of line items.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub line_items: Option<Vec<Metadata>>,
+    pub line_items: Option<Vec<BillingStatementLineItem>>,
 
     /// The value is `true` if the resource's mode is live, and the value is `false` if the resource is
     /// in test mode.

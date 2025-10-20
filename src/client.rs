@@ -8,8 +8,8 @@ use crate::{
     config::Config,
     http::HttpClient,
     resources::{
-        BillingStatements, CheckoutSessions, Customers, Events, PaymentIntents, Payments, Payouts,
-        Refunds, Webhooks,
+        BillingStatementLineItems, BillingStatements, CheckoutSessions, Customers, Events,
+        PaymentIntents, Payments, Payouts, Refunds, Webhooks,
     },
 };
 use std::sync::Arc;
@@ -27,10 +27,10 @@ use std::sync::Arc;
 /// #[tokio::main]
 /// async fn main() -> Result<(), payrex::Error> {
 ///     let client = Client::new("your_secret_key");
-///     
+///
 ///     // Access API resources
 ///     // let payment = client.payment_intents().create(...).await?;
-///     
+///
 ///     Ok(())
 /// }
 /// ```
@@ -73,6 +73,11 @@ impl Client {
     #[must_use]
     pub fn billing_statements(&self) -> BillingStatements {
         BillingStatements::new(Arc::clone(&self.http))
+    }
+
+    #[must_use]
+    pub fn billing_statement_line_items(&self) -> BillingStatementLineItems {
+        BillingStatementLineItems::new(Arc::clone(&self.http))
     }
 
     #[must_use]
