@@ -5,6 +5,7 @@
 use crate::{
     Result,
     http::HttpClient,
+    resources::customers::Customer,
     types::{Currency, Metadata, PaymentId, PaymentIntentId, PaymentMethod, Timestamp},
 };
 use serde::{Deserialize, Serialize};
@@ -37,7 +38,8 @@ pub struct Payment {
     pub id: PaymentId,
     pub amount: i64,
     pub amount_refunded: i64,
-    pub billing: Billing,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub billing: Option<Billing>,
     pub currency: Currency,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
@@ -49,7 +51,7 @@ pub struct Payment {
     pub payment_intent_id: PaymentIntentId,
     pub status: PaymentStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer: Option<Metadata>, // TODO: Add Customer type
+    pub customer: Option<Customer>,
     pub payment_method: PaymentMethodTypes,
     pub refunded: bool,
     pub created_at: Timestamp,
@@ -67,13 +69,17 @@ pub struct Billing {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Address {
-    pub line1: String,
+    pub line1: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub line2: Option<String>,
-    pub city: String,
-    pub state: String,
-    pub postal_code: String,
-    pub country: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub city: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub postal_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -85,7 +91,7 @@ pub struct PaymentMethodTypes {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PaymentStatus {
-    Succeeded,
+    Paid,
     Failed,
 }
 
@@ -133,9 +139,9 @@ mod tests {
 
     #[test]
     fn test_payment_status_serialization() {
-        let status = PaymentStatus::Succeeded;
+        let status = PaymentStatus::Paid;
         let serialized = serde_json::to_string(&status).unwrap();
-        assert_eq!(serialized, "\"succeeded\"");
+        assert_eq!(serialized, "\"paid\"");
 
         let status = PaymentStatus::Failed;
         let serialized = serde_json::to_string(&status).unwrap();
@@ -145,12 +151,12 @@ mod tests {
     #[test]
     fn test_address_serialization() {
         let address = Address {
-            line1: "BGC".to_string(),
+            line1: Some("BGC".to_string()),
             line2: Some("Apt 4B".to_string()),
-            city: "Taguig".to_string(),
-            state: "NCR".to_string(),
-            postal_code: "1635".to_string(),
-            country: "PH".to_string(),
+            city: Some("Taguig".to_string()),
+            state: Some("NCR".to_string()),
+            postal_code: Some("1635".to_string()),
+            country: Some("PH".to_string()),
         };
 
         let serialized = serde_json::to_string(&address).unwrap();
@@ -161,12 +167,12 @@ mod tests {
     #[test]
     fn test_billing_serialization() {
         let address = Address {
-            line1: "BGC".to_string(),
+            line1: Some("BGC".to_string()),
             line2: Some("Apt 4B".to_string()),
-            city: "Taguig".to_string(),
-            state: "NCR".to_string(),
-            postal_code: "1635".to_string(),
-            country: "PH".to_string(),
+            city: Some("Taguig".to_string()),
+            state: Some("NCR".to_string()),
+            postal_code: Some("1635".to_string()),
+            country: Some("PH".to_string()),
         };
 
         let billing = Billing {
