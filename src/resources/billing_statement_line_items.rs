@@ -74,9 +74,31 @@ pub struct CreateBillingStatementLineItems {
     pub quantity: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UpdateBillingStatementLineItems {
     pub description: Option<String>,
     pub unit_price: Option<u64>,
     pub quantity: Option<u64>,
+}
+
+impl UpdateBillingStatementLineItems {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn unit_price(mut self, price: u64) -> Self {
+        self.unit_price = Some(price);
+        self
+    }
+
+    pub fn quantity(mut self, quantity: u64) -> Self {
+        self.quantity = Some(quantity);
+        self
+    }
 }
