@@ -74,3 +74,83 @@ pub struct PayoutTransaction {
     pub created_at: Timestamp,
     pub updated_at: Option<Timestamp>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{PayoutId, PayoutTransactionId, Timestamp};
+    use serde_json;
+
+    #[test]
+    fn test_payout_status_serialization() {
+        let status = PayoutStatus::Pending;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"pending\"");
+
+        let status = PayoutStatus::InTransit;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"in_transit\"");
+
+        let status = PayoutStatus::Failed;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"failed\"");
+
+        let status = PayoutStatus::Cancelled;
+        let json = serde_json::to_string(&status).unwrap();
+        assert_eq!(json, "\"cancelled\"");
+    }
+
+    #[test]
+    fn test_payout_transaction_type_serialization() {
+        let kind = PayoutTransactionType::Payment;
+        assert_eq!(serde_json::to_string(&kind).unwrap(), "\"payment\"");
+        let kind = PayoutTransactionType::Refund;
+        assert_eq!(serde_json::to_string(&kind).unwrap(), "\"refund\"");
+        let kind = PayoutTransactionType::Adjustment;
+        assert_eq!(serde_json::to_string(&kind).unwrap(), "\"adjustment\"");
+    }
+
+    #[test]
+    fn test_payout_serialization() {
+        let payout = Payout {
+            id: PayoutId::new_unchecked("po_123"),
+            amount: 5000,
+            destination: Some("bank_acc".to_string()),
+            livemode: true,
+            net_amount: Some(4900),
+            status: PayoutStatus::Pending,
+            created_at: Timestamp::from_unix(1_610_000_000),
+            updated_at: Some(Timestamp::from_unix(1_610_001_000)),
+        };
+        let json = serde_json::to_value(&payout).unwrap();
+        assert_eq!(json["id"], "po_123");
+        assert_eq!(json["amount"], 5000);
+        assert_eq!(json["destination"], "bank_acc");
+        assert_eq!(json["livemode"], true);
+        assert_eq!(json["net_amount"], 4900);
+        assert_eq!(json["status"], "pending");
+        assert_eq!(json["created_at"], 1_610_000_000);
+        assert_eq!(json["updated_at"], 1_610_001_000);
+    }
+
+    #[test]
+    fn test_payout_transaction_serialization() {
+        let tx = PayoutTransaction {
+            id: PayoutTransactionId::new_unchecked("pot_abc"),
+            amount: 500,
+            net_amount: 490,
+            transaction_id: PayoutTransactionId::new_unchecked("pot_xyz"),
+            transaction_type: PayoutTransactionType::Refund,
+            created_at: Timestamp::from_unix(1_610_002_000),
+            updated_at: None,
+        };
+        let json = serde_json::to_value(&tx).unwrap();
+        assert_eq!(json["id"], "pot_abc");
+        assert_eq!(json["amount"], 500);
+        assert_eq!(json["net_amount"], 490);
+        assert_eq!(json["transaction_id"], "pot_xyz");
+        assert_eq!(json["transaction_type"], "refund");
+        assert_eq!(json["created_at"], 1_610_002_000);
+        assert!(json.get("updated_at").unwrap().is_null());
+    }
+}
