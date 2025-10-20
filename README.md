@@ -17,7 +17,7 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
   - [ ] Webhooks
   - [ ] Events
   - [ ] Refunds
-  - [ ] Payouts
+  - [x] Payouts
 - [ ] Final
   - [ ] Integration tests
   - [ ] Documentation improvements

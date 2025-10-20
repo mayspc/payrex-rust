@@ -42,8 +42,8 @@ impl Customers {
             .await
     }
 
-    pub async fn list(&self, _params: Option<CustomerListParams>) -> Result<List<Customer>> {
-        self.http.get("/customers").await
+    pub async fn list(&self, params: Option<CustomerListParams>) -> Result<List<Customer>> {
+        self.http.get_with_params("/customers", &params).await
     }
 }
 
