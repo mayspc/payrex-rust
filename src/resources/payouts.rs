@@ -5,7 +5,7 @@
 use crate::{
     Result,
     http::HttpClient,
-    types::{List, ListParams, PayoutId, Timestamp},
+    types::{List, ListParams, PayoutId, PayoutTransactionId, Timestamp},
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -21,12 +21,14 @@ impl Payouts {
         Self { http }
     }
 
-    pub async fn retrieve(&self, id: &PayoutId) -> Result<Payout> {
-        self.http.get(&format!("/payouts/{}", id.as_str())).await
-    }
-
-    pub async fn list(&self, _params: ListParams) -> Result<List<Payout>> {
-        self.http.get("/payouts").await
+    pub async fn list_transactions(
+        &self,
+        id: &PayoutId,
+        params: Option<ListParams>,
+    ) -> Result<List<PayoutTransaction>> {
+        self.http
+            .get_with_params(&format!("/payouts/{}/transactions", id.as_str()), &params)
+            .await
     }
 }
 
@@ -49,7 +51,26 @@ pub struct Payout {
 pub enum PayoutStatus {
     Pending,
     InTransit,
-    Paid,
     Failed,
     Cancelled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PayoutTransactionType {
+    Payment,
+    Refund,
+    Adjustment,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PayoutTransaction {
+    pub id: PayoutTransactionId,
+    pub amount: i32,
+    pub net_amount: i32,
+    // TODO: identify the type of resource id based on `transaction_type`
+    pub transaction_id: PayoutTransactionId,
+    pub transaction_type: PayoutTransactionType,
+    pub created_at: Timestamp,
+    pub updated_at: Option<Timestamp>,
 }
