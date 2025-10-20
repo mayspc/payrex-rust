@@ -27,7 +27,7 @@ impl Refunds {
 
     pub async fn update(&self, id: &RefundId, params: UpdateRefund) -> Result<Refund> {
         self.http
-            .patch(&format!("/refunds/{}", id.as_str()), &params)
+            .put(&format!("/refunds/{}", id.as_str()), &params)
             .await
     }
 }
@@ -41,7 +41,7 @@ pub struct Refund {
     pub status: RefundStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    pub reason: String,
+    pub reason: RefundReason,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub remarks: Option<String>,
     pub payment_id: PaymentId,
@@ -57,20 +57,72 @@ pub enum RefundStatus {
     Pending,
     Succeeded,
     Failed,
-    Cancelled,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RefundReason {
+    Fraudulent,
+    RequestedByCustomer,
+    ProductOutOfStock,
+    ProductWasDamaged,
+    ServiceNotProvided,
+    ServiceMisaligned,
+    WrongProductReceived,
+    Others,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateRefund {
-    pub payment: PaymentId,
+    pub payment_id: PaymentId,
     pub amount: i64,
-    pub reason: String,
+    pub currency: Currency,
+    pub reason: RefundReason,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remarks: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct UpdateRefund {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+}
+
+impl CreateRefund {
+    #[must_use]
+    pub fn new(
+        payment_id: PaymentId,
+        amount: i64,
+        currency: Currency,
+        reason: RefundReason,
+    ) -> Self {
+        Self {
+            payment_id,
+            amount,
+            currency,
+            reason,
+            metadata: None,
+            remarks: None,
+            description: None,
+        }
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+
+    pub fn remarks(mut self, remarks: impl Into<String>) -> Self {
+        self.remarks = Some(remarks.into());
+        self
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
 }
