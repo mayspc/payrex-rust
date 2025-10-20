@@ -37,7 +37,7 @@ pub struct Payout {
     pub id: PayoutId,
     pub amount: i64,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub destination: Option<String>,
+    pub destination: Option<PayoutDestination>,
     pub livemode: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub net_amount: Option<i64>,
@@ -53,6 +53,13 @@ pub enum PayoutStatus {
     InTransit,
     Failed,
     Cancelled,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PayoutDestination {
+    pub account_name: String,
+    pub account_number: String,
+    pub bank_name: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,10 +119,15 @@ mod tests {
 
     #[test]
     fn test_payout_serialization() {
+        let dest = PayoutDestination {
+            account_name: "John Doe".to_string(),
+            account_number: "123456".to_string(),
+            bank_name: "Test Bank".to_string(),
+        };
         let payout = Payout {
             id: PayoutId::new_unchecked("po_123"),
             amount: 5000,
-            destination: Some("bank_acc".to_string()),
+            destination: Some(dest.clone()),
             livemode: true,
             net_amount: Some(4900),
             status: PayoutStatus::Pending,
@@ -125,7 +137,9 @@ mod tests {
         let json = serde_json::to_value(&payout).unwrap();
         assert_eq!(json["id"], "po_123");
         assert_eq!(json["amount"], 5000);
-        assert_eq!(json["destination"], "bank_acc");
+        assert_eq!(json["destination"]["account_name"], "John Doe");
+        assert_eq!(json["destination"]["account_number"], "123456");
+        assert_eq!(json["destination"]["bank_name"], "Test Bank");
         assert_eq!(json["livemode"], true);
         assert_eq!(json["net_amount"], 4900);
         assert_eq!(json["status"], "pending");
@@ -153,4 +167,16 @@ mod tests {
         assert_eq!(json["created_at"], 1_610_002_000);
         assert!(json.get("updated_at").unwrap().is_null());
     }
+}
+#[test]
+fn test_payout_destination_serialization() {
+    let dest = PayoutDestination {
+        account_name: "Jane Roe".to_string(),
+        account_number: "654321".to_string(),
+        bank_name: "Example Bank".to_string(),
+    };
+    let serialized = serde_json::to_string(&dest).unwrap();
+    let expected =
+        r#"{"account_name":"Jane Roe","account_number":"654321","bank_name":"Example Bank"}"#;
+    assert_eq!(serialized, expected);
 }
