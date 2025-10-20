@@ -25,7 +25,7 @@ impl BillingStatementLineItems {
 
     pub async fn create(
         &self,
-        params: CreateBillingStatementLineItems,
+        params: CreateBillingStatementLineItem,
     ) -> Result<BillingStatementLineItem> {
         self.http
             .post("/billing_statement_line_items", &params)
@@ -35,7 +35,7 @@ impl BillingStatementLineItems {
     pub async fn update(
         &self,
         id: BillingStatementLineItemId,
-        params: UpdateBillingStatementLineItems,
+        params: UpdateBillingStatementLineItem,
     ) -> Result<BillingStatementLineItem> {
         self.http
             .put(
@@ -67,7 +67,7 @@ pub struct BillingStatementLineItem {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct CreateBillingStatementLineItems {
+pub struct CreateBillingStatementLineItem {
     pub billing_statement_id: BillingStatementId,
     pub description: String,
     pub unit_price: u64,
@@ -75,13 +75,30 @@ pub struct CreateBillingStatementLineItems {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct UpdateBillingStatementLineItems {
+pub struct UpdateBillingStatementLineItem {
     pub description: Option<String>,
     pub unit_price: Option<u64>,
     pub quantity: Option<u64>,
 }
 
-impl UpdateBillingStatementLineItems {
+impl CreateBillingStatementLineItem {
+    #[must_use]
+    pub fn new(
+        billing_statement_id: BillingStatementId,
+        description: impl Into<String>,
+        unit_price: u64,
+        quantity: u64,
+    ) -> Self {
+        Self {
+            billing_statement_id,
+            description: description.into(),
+            unit_price,
+            quantity,
+        }
+    }
+}
+
+impl UpdateBillingStatementLineItem {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
