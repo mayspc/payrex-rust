@@ -119,3 +119,71 @@ impl UpdateBillingStatementLineItem {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{BillingStatementId, BillingStatementLineItemId, Timestamp};
+    use serde_json;
+
+    #[test]
+    fn test_create_billing_statement_line_item_builder() {
+        let params = CreateBillingStatementLineItem::new(
+            BillingStatementId::new("bstm_1"),
+            "Item A",
+            1500,
+            3,
+        );
+        assert_eq!(params.billing_statement_id.as_str(), "bstm_1");
+        assert_eq!(params.description, "Item A".to_string());
+        assert_eq!(params.unit_price, 1500);
+        assert_eq!(params.quantity, 3);
+    }
+
+    #[test]
+    fn test_update_billing_statement_line_item_builder() {
+        let params = UpdateBillingStatementLineItem::new()
+            .description("Updated item")
+            .unit_price(2000)
+            .quantity(5);
+        assert_eq!(params.description, Some("Updated item".to_string()));
+        assert_eq!(params.unit_price, Some(2000));
+        assert_eq!(params.quantity, Some(5));
+    }
+
+    #[test]
+    fn test_billing_statement_line_item_serialization() {
+        let item = BillingStatementLineItem {
+            id: BillingStatementLineItemId::new("bstm_li_1"),
+            description: Some("Test item".to_string()),
+            unit_price: 1200,
+            quantity: 2,
+            billing_statement_id: BillingStatementId::new("bstm_1"),
+            livemode: false,
+            created_at: Timestamp::from_unix(1_621_000_000),
+            updated_at: Some(Timestamp::from_unix(1_621_000_100)),
+        };
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["id"], "bstm_li_1");
+        assert_eq!(json["description"], "Test item");
+        assert_eq!(json["unit_price"], 1200);
+        assert_eq!(json["quantity"], 2);
+        assert_eq!(json["billing_statement_id"], "bstm_1");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["created_at"], 1_621_000_000);
+        assert_eq!(json["updated_at"], 1_621_000_100);
+    }
+
+    #[test]
+    fn test_update_billing_statement_line_item_serialization() {
+        let params = UpdateBillingStatementLineItem::new()
+            .description("Example description")
+            .unit_price(500)
+            .quantity(1);
+        let serialized = serde_json::to_string(&params).unwrap();
+        assert_eq!(
+            serialized,
+            r#"{"description":"Example description","unit_price":500,"quantity":1}"#
+        );
+    }
+}
