@@ -53,6 +53,18 @@ impl HttpClient {
         self.execute_with_retry(|| self.client.get(&url)).await
     }
 
+    pub async fn get_with_params<B: Serialize, T: DeserializeOwned>(
+        &self,
+        path: &str,
+        body: &B,
+    ) -> Result<T> {
+        let url = self.build_url(path)?;
+        let form_data = serde_qs::to_string(body)
+            .map_err(|e| Error::Config(format!("Failed to serialize request body: {e}")))?;
+        self.execute_with_retry(|| self.client.get(&url).body(form_data.clone()))
+            .await
+    }
+
     pub async fn post<B: Serialize, T: DeserializeOwned>(&self, path: &str, body: &B) -> Result<T> {
         let url = self.build_url(path)?;
         let form_data = serde_qs::to_string(body)
