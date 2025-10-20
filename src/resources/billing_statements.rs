@@ -5,8 +5,14 @@
 use crate::{
     Result,
     http::HttpClient,
-    resources::billing_statement_line_items::BillingStatementLineItem,
-    types::{BillingStatementId, Currency, CustomerId, List, ListParams, Metadata, Timestamp},
+    resources::{
+        billing_statement_line_items::BillingStatementLineItem, customers::Customer,
+        payment_intents::PaymentIntent,
+    },
+    types::{
+        BillingStatementId, Currency, CustomerId, List, ListParams, Metadata, PaymentMethod,
+        Timestamp,
+    },
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -55,7 +61,7 @@ impl BillingStatements {
         params: UpdateBillingStatement,
     ) -> Result<BillingStatement> {
         self.http
-            .patch(&format!("/billing_statements/{}", id.as_str()), &params)
+            .put(&format!("/billing_statements/{}", id.as_str()), &params)
             .await
     }
 
@@ -75,8 +81,10 @@ impl BillingStatements {
     /// Endpoint: `GET /billing_statements`
     ///
     /// [API Reference](https://docs.payrexhq.com/docs/api/billing_statements/list)
-    pub async fn list(&self, _params: ListParams) -> Result<List<BillingStatement>> {
-        self.http.get("/billing_statements").await
+    pub async fn list(&self, params: Option<ListParams>) -> Result<List<BillingStatement>> {
+        self.http
+            .get_with_params("/billing_statements", &params)
+            .await
     }
 
     /// Finalizes a billing statement resource.
@@ -200,16 +208,15 @@ pub struct BillingStatement {
 
     /// The [PaymentIntent](https://docs.payrexhq.com/docs/api/payment_intents) resource created for the [`BillingStatement`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_intent: Option<String>,
+    pub payment_intent: Option<PaymentIntent>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub setup_future_usage: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub statement_descriptor: Option<String>,
     pub status: BillingStatementStatus,
+    pub payment_settings: PaymentSettings,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_settings: Option<Metadata>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer: Option<Metadata>,
+    pub customer: Option<Customer>,
 
     /// The time the resource was created and measured in seconds since the Unix epoch.
     pub created_at: Timestamp,
@@ -217,6 +224,11 @@ pub struct BillingStatement {
     /// The time the resource was updated and measured in seconds since the Unix epoch.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub updated_at: Option<Timestamp>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PaymentSettings {
+    pub payment_methods: Vec<PaymentMethod>,
 }
 
 /// The latest status of the [`BillingStatement`].
@@ -246,12 +258,17 @@ pub enum BillingStatementStatus {
 pub struct CreateBillingStatement {
     /// The ID of a customer resource. To learn more about the customer resource, you can refer
     /// [here](https://docs.payrexhq.com/docs/api/customers).
-    pub customer: CustomerId,
+    pub customer_id: CustomerId,
 
     /// A three-letter ISO currency code, in uppercase. As of the moment, we only support PHP.
     ///
     /// This value is derived from the currency of the associated customer.
     pub currency: Currency,
+
+    pub payment_settings: PaymentSettings,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub billing_details_collection: Option<String>,
 
     /// An arbitrary string attached to the billing statement and copied over to its payment
     /// intent. This is a useful reference when viewing the payment resources associated with the
@@ -273,6 +290,12 @@ pub struct CreateBillingStatement {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct UpdateBillingStatement {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub customer_id: Option<CustomerId>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_settings: Option<PaymentSettings>,
+
     /// An arbitrary string attached to the billing statement and copied over to its payment
     /// intent. This is a useful reference when viewing the payment resources associated with the
     /// billing statement from the PayRex Dashboard.
@@ -289,4 +312,64 @@ pub struct UpdateBillingStatement {
     /// once the billing statement is finalized.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+}
+
+impl CreateBillingStatement {
+    #[must_use]
+    pub fn new(
+        customer_id: CustomerId,
+        currency: Currency,
+        payment_settings: PaymentSettings,
+    ) -> Self {
+        Self {
+            customer_id,
+            currency,
+            payment_settings,
+            billing_details_collection: None,
+            description: None,
+            metadata: None,
+        }
+    }
+
+    pub fn billing_details_collection(mut self, collection: impl Into<String>) -> Self {
+        self.billing_details_collection = Some(collection.into());
+        self
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+}
+
+impl UpdateBillingStatement {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn customer_id(mut self, id: CustomerId) -> Self {
+        self.customer_id = Some(id);
+        self
+    }
+
+    pub fn payment_settings(mut self, settings: PaymentSettings) -> Self {
+        self.payment_settings = Some(settings);
+        self
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn metadata(mut self, metadata: Metadata) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
 }
