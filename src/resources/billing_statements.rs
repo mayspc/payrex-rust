@@ -144,9 +144,8 @@ pub struct BillingStatement {
     /// (5999999999 in cents).
     pub amount: i64,
 
-    /// A three-letter ISO currency code, in uppercase. As of the moment, we only support PHP.
-    ///
-    /// This value is derived from the currency of the associated customer.
+    /// Defines if the billing information fields will always show or managed by PayRex. Default value
+    /// is `always`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub billing_details_collection: Option<String>,
 
@@ -371,5 +370,152 @@ impl UpdateBillingStatement {
     pub fn metadata(mut self, metadata: Metadata) -> Self {
         self.metadata = Some(metadata);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::{BillingStatementStatus, PaymentSettings};
+    use crate::types::{
+        BillingStatementId, Currency, CustomerId, Metadata, PaymentMethod, Timestamp,
+    };
+    use serde_json;
+
+    #[test]
+    fn test_billing_statement_status_serialization() {
+        assert_eq!(
+            serde_json::to_string(&BillingStatementStatus::Draft).unwrap(),
+            "\"draft\""
+        );
+        assert_eq!(
+            serde_json::to_string(&BillingStatementStatus::Open).unwrap(),
+            "\"open\""
+        );
+        assert_eq!(
+            serde_json::to_string(&BillingStatementStatus::Paid).unwrap(),
+            "\"paid\""
+        );
+        assert_eq!(
+            serde_json::to_string(&BillingStatementStatus::Void).unwrap(),
+            "\"void\""
+        );
+        assert_eq!(
+            serde_json::to_string(&BillingStatementStatus::Uncollectible).unwrap(),
+            "\"uncollectible\""
+        );
+    }
+
+    #[test]
+    fn test_payment_settings_serialization() {
+        let settings = PaymentSettings {
+            payment_methods: vec![PaymentMethod::Card, PaymentMethod::GCash],
+        };
+        let json = serde_json::to_value(&settings).unwrap();
+        let methods = json["payment_methods"].as_array().unwrap();
+        assert_eq!(methods[0].as_str().unwrap(), "card");
+        assert_eq!(methods[1].as_str().unwrap(), "gcash");
+    }
+
+    #[test]
+    fn test_create_billing_statement_builder() {
+        let mut metadata = Metadata::new();
+        metadata.insert("k", "v");
+
+        let settings = PaymentSettings {
+            payment_methods: vec![PaymentMethod::QRPh],
+        };
+        let params = CreateBillingStatement::new(
+            CustomerId::new_unchecked("cus_001"),
+            Currency::PHP,
+            settings.clone(),
+        )
+        .billing_details_collection("always")
+        .description("desc")
+        .metadata(metadata.clone());
+
+        assert_eq!(params.customer_id.as_str(), "cus_001");
+        assert_eq!(params.currency, Currency::PHP);
+        assert_eq!(params.payment_settings, settings);
+        assert_eq!(params.billing_details_collection.as_deref(), Some("always"));
+        assert_eq!(params.description.as_deref(), Some("desc"));
+        assert_eq!(params.metadata.unwrap().get("k"), Some("v"));
+    }
+
+    #[test]
+    fn test_update_billing_statement_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("x", "y");
+
+        let settings = PaymentSettings {
+            payment_methods: vec![PaymentMethod::Maya],
+        };
+        let params = UpdateBillingStatement::new()
+            .customer_id(CustomerId::new_unchecked("cus_002"))
+            .payment_settings(settings.clone())
+            .description("upd")
+            .metadata(metadata.clone());
+
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["customer_id"], "cus_002");
+        assert_eq!(json["payment_settings"]["payment_methods"][0], "maya");
+        assert_eq!(json["description"], "upd");
+        assert_eq!(json["metadata"]["x"], "y");
+    }
+
+    #[test]
+    fn test_billing_statement_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("foo", "bar");
+        let settings = PaymentSettings {
+            payment_methods: vec![PaymentMethod::QRPh],
+        };
+        let stmt = BillingStatement {
+            id: BillingStatementId::new_unchecked("bs_123"),
+            amount: 2000,
+            billing_details_collection: Some("mandatory".to_string()),
+            currency: Currency::PHP,
+            customer_id: CustomerId::new_unchecked("cus_999"),
+            description: Some("Test invoice".to_string()),
+            due_at: Some(Timestamp::from_unix(1_620_002_000)),
+            finalized_at: None,
+            billing_statement_merchant_name: Some("Shop".to_string()),
+            billing_statement_number: Some("BS100".to_string()),
+            billing_statement_url: Some("http://example.com".to_string()),
+            line_items: Some(vec![Metadata::with_pair("item", "1")]),
+            livemode: false,
+            metadata: Some(metadata.clone()),
+            payment_intent: None,
+            setup_future_usage: Some("on_session".to_string()),
+            statement_descriptor: Some("DESC".to_string()),
+            status: BillingStatementStatus::Open,
+            payment_settings: settings.clone(),
+            customer: None,
+            created_at: Timestamp::from_unix(1_620_000_000),
+            updated_at: Some(Timestamp::from_unix(1_620_001_000)),
+        };
+        let json = serde_json::to_value(&stmt).unwrap();
+        assert_eq!(json["id"], "bs_123");
+        assert_eq!(json["amount"], 2000);
+        assert_eq!(json["billing_details_collection"], "mandatory");
+        assert_eq!(json["currency"], "PHP");
+        assert_eq!(json["customer_id"], "cus_999");
+        assert_eq!(json["description"], "Test invoice");
+        assert_eq!(json["due_at"], 1_620_002_000);
+        assert_eq!(json["billing_statement_number"], "BS100");
+        assert_eq!(json["billing_statement_url"], "http://example.com");
+        let items = json["line_items"].as_array().unwrap();
+        assert_eq!(items[0]["item"], "1");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["metadata"]["foo"], "bar");
+        assert_eq!(json["setup_future_usage"], "on_session");
+        assert_eq!(json["statement_descriptor"], "DESC");
+        assert_eq!(json["status"], "open");
+        let methods = json["payment_settings"]["payment_methods"]
+            .as_array()
+            .unwrap();
+        assert_eq!(methods[0].as_str().unwrap(), "qrph");
+        assert_eq!(json["created_at"], 1_620_000_000);
+        assert_eq!(json["updated_at"], 1_620_001_000);
     }
 }
