@@ -150,3 +150,105 @@ impl UpdateWebhook {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::event::CheckoutSessionEvent;
+    use serde_json;
+
+    #[test]
+    fn test_webhook_status_serialization() {
+        assert_eq!(
+            serde_json::to_string(&WebhookStatus::Enabled).unwrap(),
+            "\"enabled\""
+        );
+        assert_eq!(
+            serde_json::to_string(&WebhookStatus::Disabled).unwrap(),
+            "\"disabled\""
+        );
+    }
+
+    #[test]
+    fn test_webhook_serialization() {
+        let webhook = Webhook {
+            id: WebhookId::new("wh_123"),
+            secret_key: Some("secret".to_string()),
+            status: WebhookStatus::Enabled,
+            description: Some("desc".to_string()),
+            livemode: false,
+            url: "http://url".to_string(),
+            events: vec![EventType::CheckoutSession(CheckoutSessionEvent::Expired)],
+            created_at: Timestamp::from_unix(1_600_000),
+            updated_at: Timestamp::from_unix(1_600_001),
+        };
+
+        let json = serde_json::to_value(&webhook).unwrap();
+        assert_eq!(json["id"], "wh_123");
+        assert_eq!(json["secret_key"], "secret");
+        assert_eq!(json["status"], "enabled");
+        assert_eq!(json["description"], "desc");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["url"], "http://url");
+
+        let events = json["events"].as_array().unwrap();
+        assert_eq!(events[0].as_str().unwrap(), "checkout_session.expired");
+        assert_eq!(json["created_at"], 1_600_000);
+        assert_eq!(json["updated_at"], 1_600_001);
+    }
+
+    #[test]
+    fn test_create_webhook_builder() {
+        let events = vec![EventType::CheckoutSession(CheckoutSessionEvent::Expired)];
+        let params = CreateWebhook::new("https://example.com", events.clone());
+
+        assert_eq!(params.url, "https://example.com".to_string());
+        assert_eq!(params.events, events);
+        assert!(params.description.is_none());
+    }
+
+    #[test]
+    fn test_create_webhook_serialization() {
+        let events = vec![EventType::CheckoutSession(CheckoutSessionEvent::Expired)];
+        let params = CreateWebhook::new("https://example.com", events.clone()).description("desc");
+
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["url"], "https://example.com");
+
+        let evs = json["events"].as_array().unwrap();
+        assert_eq!(evs[0].as_str().unwrap(), "checkout_session.expired");
+        assert_eq!(json["description"], "desc");
+    }
+
+    #[test]
+    fn test_update_webhook_builder() {
+        let events = vec![EventType::CheckoutSession(CheckoutSessionEvent::Expired)];
+        let params = UpdateWebhook::new()
+            .url("https://example.com")
+            .events(events.clone())
+            .description("desc");
+
+        assert_eq!(params.url.as_deref(), Some("https://example.com"));
+        assert_eq!(params.events, Some(events));
+        assert_eq!(params.description.as_deref(), Some("desc"));
+    }
+
+    #[test]
+    fn test_update_webhook_serialization() {
+        let serialized_empty = serde_json::to_string(&UpdateWebhook::new()).unwrap();
+        assert_eq!(serialized_empty, "{}");
+
+        let events = vec![EventType::CheckoutSession(CheckoutSessionEvent::Expired)];
+        let params = UpdateWebhook::new()
+            .url("https://example.com")
+            .events(events.clone())
+            .description("desc");
+
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["url"], "https://example.com");
+
+        let evs = json["events"].as_array().unwrap();
+        assert_eq!(evs[0].as_str().unwrap(), "checkout_session.expired");
+        assert_eq!(json["description"], "desc");
+    }
+}
