@@ -125,7 +125,7 @@ mod tests {
             bank_name: "Test Bank".to_string(),
         };
         let payout = Payout {
-            id: PayoutId::new_unchecked("po_123"),
+            id: PayoutId::new("po_123"),
             amount: 5000,
             destination: Some(dest.clone()),
             livemode: true,
@@ -150,10 +150,10 @@ mod tests {
     #[test]
     fn test_payout_transaction_serialization() {
         let tx = PayoutTransaction {
-            id: PayoutTransactionId::new_unchecked("pot_abc"),
+            id: PayoutTransactionId::new("pot_abc"),
             amount: 500,
             net_amount: 490,
-            transaction_id: PayoutTransactionId::new_unchecked("pot_xyz"),
+            transaction_id: PayoutTransactionId::new("pot_xyz"),
             transaction_type: PayoutTransactionType::Refund,
             created_at: Timestamp::from_unix(1_610_002_000),
             updated_at: None,

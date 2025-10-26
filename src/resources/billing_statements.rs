@@ -447,12 +447,11 @@ mod tests {
             payment_methods: vec![PaymentMethod::QRPh],
         };
 
-        let params =
-            CreateBillingStatement::new(CustomerId::new_unchecked("cus_001"), Currency::PHP)
-                .payment_settings(settings.clone())
-                .billing_details_collection("always")
-                .description("desc")
-                .metadata(metadata.clone());
+        let params = CreateBillingStatement::new(CustomerId::new("cus_001"), Currency::PHP)
+            .payment_settings(settings.clone())
+            .billing_details_collection("always")
+            .description("desc")
+            .metadata(metadata.clone());
 
         assert_eq!(params.customer_id.as_str(), "cus_001");
         assert_eq!(params.currency, Currency::PHP);
@@ -472,13 +471,15 @@ mod tests {
         };
 
         let params = UpdateBillingStatement::new()
-            .customer_id(CustomerId::new_unchecked("cus_002"))
+            .customer_id(CustomerId::new("cus_002"))
             .payment_settings(settings.clone())
+            .billing_details_collection("always")
             .description("upd")
             .metadata(metadata.clone());
 
         let json = serde_json::to_value(&params).unwrap();
         assert_eq!(json["customer_id"], "cus_002");
+        assert_eq!(json["billing_details_collection"], "always");
         assert_eq!(json["payment_settings"]["payment_methods"][0], "maya");
         assert_eq!(json["description"], "upd");
         assert_eq!(json["metadata"]["x"], "y");
@@ -508,7 +509,7 @@ mod tests {
             amount: 2000,
             billing_details_collection: Some("mandatory".to_string()),
             currency: Currency::PHP,
-            customer_id: CustomerId::new_unchecked("cus_999"),
+            customer_id: CustomerId::new("cus_999"),
             description: Some("Test invoice".to_string()),
             due_at: Some(Timestamp::from_unix(1_620_002_000)),
             finalized_at: None,

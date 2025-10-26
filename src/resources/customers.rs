@@ -302,7 +302,7 @@ mod tests {
         let mut metadata = Metadata::new();
         metadata.insert("order_id", "12345");
         let customer = Customer {
-            id: CustomerId::new_unchecked("cus_123456"),
+            id: CustomerId::new("cus_123456"),
             billing_statement_prefix: Some("PREF".to_string()),
             currency: Some(Currency::PHP),
             email: Some("test@example.com".to_string()),
