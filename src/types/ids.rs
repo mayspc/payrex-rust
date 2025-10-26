@@ -76,6 +76,11 @@ define_id!(
     "Billing Statement Line Item ID"
 );
 define_id!(CheckoutSessionId, "cs_", "Checkout Session ID");
+define_id!(
+    CheckoutSessionLineItemId,
+    "cs_li_",
+    "Checkout Session Line Item ID"
+);
 define_id!(PaymentId, "pay_", "Payment ID");
 define_id!(RefundId, "re_", "Refund ID");
 define_id!(WebhookId, "wh_", "Webhook ID");
