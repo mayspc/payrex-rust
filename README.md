@@ -15,8 +15,8 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
   - [x] Billing Statements
   - [x] Billing Statement Line Items
   - [x] Checkout Sessions
-  - [ ] Webhooks
-  - [ ] Events
+  - [x] Webhooks
+  - [x] Events
   - [x] Refunds
   - [x] Payouts
 - [ ] Final
