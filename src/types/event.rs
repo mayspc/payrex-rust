@@ -146,3 +146,50 @@ impl Display for EventType {
         write!(f, "{}", self.as_str())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn test_event_type_serialization_and_as_str() {
+        // Simple event type serialization and Display
+        let et = EventType::BillingStatement(BillingStatementEvent::Created);
+        assert_eq!(et.as_str(), "billing_statement.created");
+        assert_eq!(
+            serde_json::to_string(&et).unwrap(),
+            "\"billing_statement.created\""
+        );
+        assert_eq!(format!("{et}"), "billing_statement.created");
+
+        // Another variant
+        let et2 = EventType::Refund(RefundEvent::Updated);
+        assert_eq!(et2.as_str(), "refund.updated");
+        assert_eq!(serde_json::to_string(&et2).unwrap(), "\"refund.updated\"");
+    }
+
+    #[test]
+    fn test_event_serialization() {
+        let id = EventId::new("evt_123");
+        let data = json!({"key": "value"});
+        let event = Event {
+            id: id.clone(),
+            data: data.clone(),
+            event_type: EventType::CheckoutSession(CheckoutSessionEvent::Expired),
+            pending_webhooks: Some(3),
+            livemode: false,
+            created_at: Timestamp::from_unix(1_600_000_000),
+            updated_at: Timestamp::from_unix(1_600_000_500),
+        };
+
+        let json = serde_json::to_value(&event).unwrap();
+        assert_eq!(json["id"], id.as_str());
+        assert_eq!(json["data"], data);
+        assert_eq!(json["type"], "checkout_session.expired");
+        assert_eq!(json["pending_webhooks"], 3);
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["created_at"], 1_600_000_000);
+        assert_eq!(json["updated_at"], 1_600_000_500);
+    }
+}
