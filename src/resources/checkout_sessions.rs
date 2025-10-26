@@ -210,3 +210,198 @@ impl CheckoutSessionLineItem {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::{
+        CheckoutSessionId, CheckoutSessionLineItemId, Currency, Metadata, PaymentMethod,
+        PaymentMethodOptions, Timestamp,
+    };
+    use serde_json;
+
+    #[test]
+    fn test_checkout_session_status_serialization() {
+        assert_eq!(
+            serde_json::to_string(&CheckoutSessionStatus::Active).unwrap(),
+            "\"active\""
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckoutSessionStatus::Completed).unwrap(),
+            "\"completed\""
+        );
+        assert_eq!(
+            serde_json::to_string(&CheckoutSessionStatus::Expired).unwrap(),
+            "\"expired\""
+        );
+    }
+
+    #[test]
+    fn test_checkout_session_line_item_builder() {
+        let item = CheckoutSessionLineItem::new("Test item", 1500, 2);
+        assert_eq!(item.name, "Test item".to_string());
+        assert_eq!(item.amount, 1500);
+        assert_eq!(item.quantity, 2);
+        assert!(item.description.is_none());
+        assert!(item.image.is_none());
+
+        let item = item.description("Desc").image("img_url");
+        assert_eq!(item.description.as_deref(), Some("Desc"));
+        assert_eq!(item.image.as_deref(), Some("img_url"));
+    }
+
+    #[test]
+    fn test_checkout_session_line_item_serialization() {
+        let mut item = CheckoutSessionLineItem::new("Test item", 1500, 2)
+            .description("Desc")
+            .image("img_url");
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["name"], "Test item");
+        assert_eq!(json["amount"], 1500);
+        assert_eq!(json["quantity"], 2);
+        assert_eq!(json["description"], "Desc");
+        assert_eq!(json["image"], "img_url");
+        assert!(json.get("id").is_none());
+
+        item.id = Some(CheckoutSessionLineItemId::new("cs_li_123"));
+        let json = serde_json::to_value(&item).unwrap();
+        assert_eq!(json["id"], "cs_li_123");
+    }
+
+    #[test]
+    fn test_create_checkout_session_builder() {
+        let line_item = CheckoutSessionLineItem::new("Item A", 1000, 1);
+        let payment_methods = vec![PaymentMethod::Card];
+        let params = CreateCheckoutSession::new(
+            Currency::PHP,
+            vec![line_item.clone()],
+            "https://success",
+            "https://cancel",
+            payment_methods.clone(),
+        );
+
+        assert_eq!(params.currency, Currency::PHP);
+        assert_eq!(params.line_items, vec![line_item]);
+        assert_eq!(params.success_url, "https://success".to_string());
+        assert_eq!(params.cancel_url, "https://cancel".to_string());
+        assert_eq!(params.payment_methods, payment_methods);
+        assert!(params.customer_reference_id.is_none());
+        assert!(params.payment_method_options.is_none());
+        assert!(params.expires_at.is_none());
+        assert!(params.billing_details_collection.is_none());
+        assert!(params.submit_type.is_none());
+        assert!(params.description.is_none());
+        assert!(params.metadata.is_none());
+    }
+
+    #[test]
+    fn test_create_checkout_session_setters_and_serialization() {
+        let line_item = CheckoutSessionLineItem::new("Item A", 1000, 1);
+        let payment_methods = vec![PaymentMethod::GCash];
+
+        let mut metadata = Metadata::new();
+        metadata.insert("foo", "bar");
+
+        let options = PaymentMethodOptions { card: None };
+        let timestamp = Timestamp::from_unix(1_630_000_000);
+        let params = CreateCheckoutSession::new(
+            Currency::PHP,
+            vec![line_item.clone()],
+            "https://success",
+            "https://cancel",
+            payment_methods.clone(),
+        )
+        .customer_reference_id("cust_123")
+        .expires_at(timestamp)
+        .payment_method_options(options.clone())
+        .billing_details_collection("always")
+        .submit_type("pay")
+        .description("Desc")
+        .metadata(metadata.clone());
+
+        let json = serde_json::to_value(&params).unwrap();
+        assert_eq!(json["customer_reference_id"], "cust_123");
+
+        let methods = json["payment_methods"].as_array().unwrap();
+        assert_eq!(methods[0].as_str().unwrap(), "gcash");
+        assert_eq!(json["expires_at"], 1_630_000_000);
+        assert_eq!(json["billing_details_collection"], "always");
+        assert_eq!(json["submit_type"], "pay");
+        assert_eq!(json["description"], "Desc");
+        assert_eq!(json["metadata"]["foo"], "bar");
+    }
+
+    #[test]
+    fn test_checkout_session_serialization() {
+        let mut metadata = Metadata::new();
+        metadata.insert("key", "value");
+
+        let line_item = CheckoutSessionLineItem {
+            id: Some(CheckoutSessionLineItemId::new("cs_li_1")),
+            name: "Item".to_string(),
+            amount: 1000,
+            quantity: 3,
+            description: Some("Desc".to_string()),
+            image: Some("img".to_string()),
+        };
+
+        let session = CheckoutSession {
+            id: CheckoutSessionId::new("cs_1"),
+            amount: Some(1000),
+            customer_reference_id: Some("cust".to_string()),
+            billing_details_collection: Some("always".to_string()),
+            client_secret: Some("secret".to_string()),
+            status: CheckoutSessionStatus::Active,
+            currency: Currency::PHP,
+            line_items: vec![line_item.clone()],
+            livemode: false,
+            url: "http://url".to_string(),
+            payment_intent: None,
+            metadata: Some(metadata.clone()),
+            success_url: Some("s_url".to_string()),
+            cancel_url: Some("c_url".to_string()),
+            payment_methods: Some(vec![PaymentMethod::Card]),
+            payment_method_options: Some(PaymentMethodOptions { card: None }),
+            description: Some("desc2".to_string()),
+            submit_type: Some("type".to_string()),
+            statement_descriptor: Some("desc3".to_string()),
+            expires_at: Some(Timestamp::from_unix(123_456)),
+            created_at: Timestamp::from_unix(654_321),
+            updated_at: Timestamp::from_unix(654_322),
+        };
+
+        let json = serde_json::to_value(&session).unwrap();
+        assert_eq!(json["id"], "cs_1");
+        assert_eq!(json["amount"], 1000);
+        assert_eq!(json["customer_reference_id"], "cust");
+        assert_eq!(json["billing_details_collection"], "always");
+        assert_eq!(json["client_secret"], "secret");
+        assert_eq!(json["status"], "active");
+        assert_eq!(json["currency"], "PHP");
+
+        let items = json["line_items"].as_array().unwrap();
+        assert_eq!(items[0]["id"], "cs_li_1");
+        assert_eq!(items[0]["name"], "Item");
+        assert_eq!(items[0]["amount"], 1000);
+        assert_eq!(items[0]["quantity"], 3);
+        assert_eq!(items[0]["description"], "Desc");
+        assert_eq!(items[0]["image"], "img");
+        assert_eq!(json["livemode"], false);
+        assert_eq!(json["url"], "http://url");
+        assert_eq!(json["metadata"]["key"], "value");
+        assert_eq!(json["success_url"], "s_url");
+        assert_eq!(json["cancel_url"], "c_url");
+
+        let methods = json["payment_methods"].as_array().unwrap();
+        assert_eq!(methods[0].as_str().unwrap(), "card");
+
+        let opts = &json["payment_method_options"];
+        assert!(opts["card"].is_null());
+        assert_eq!(json["description"], "desc2");
+        assert_eq!(json["submit_type"], "type");
+        assert_eq!(json["statement_descriptor"], "desc3");
+        assert_eq!(json["expires_at"], 123_456);
+        assert_eq!(json["created_at"], 654_321);
+        assert_eq!(json["updated_at"], 654_322);
+    }
+}
