@@ -39,7 +39,8 @@ url = { version = "2.5.7", features = ["serde"] }
 base64 = "0.22"
 
 # Form encoding with nested structure support
-serde_qs = "0.13"
+# serde_qs = "1.0.0-rc.3"
+serde_qs = { git = "https://github.com/Sheape/serde_qs.git", branch = "array-support" }
 
 [dev-dependencies]
 tokio-test = "0.4"

@@ -21,7 +21,7 @@ impl HttpClient {
 
         let credentials = format!("{}:", config.api_key());
         let encoded = general_purpose::STANDARD.encode(credentials.as_bytes());
-        let auth_value = format!("Basic {}", encoded);
+        let auth_value = format!("Basic {encoded}");
         headers.insert(
             header::AUTHORIZATION,
             header::HeaderValue::from_str(&auth_value)
