@@ -2,13 +2,12 @@
 //!
 //! Billing Statements allow you to create and send invoices to customers.
 
+use crate::resources::billing_statement_line_items::BillingStatementLineItem;
+use crate::resources::payment_intents::OptionalPaymentIntent;
 use crate::{
     Result,
     http::HttpClient,
-    resources::{
-        billing_statement_line_items::BillingStatementLineItem, customers::Customer,
-        payment_intents::PaymentIntent,
-    },
+    resources::customers::OptionalCustomer,
     types::{
         BillingStatementId, Currency, CustomerId, List, ListParams, Metadata, PaymentMethod,
         Timestamp,
@@ -122,6 +121,15 @@ impl BillingStatements {
             .post(&format!("/billing_statements/{}/void", id.as_str()), &())
             .await
     }
+
+    pub async fn mark_uncollectible(&self, id: &BillingStatementId) -> Result<BillingStatement> {
+        self.http
+            .post(
+                &format!("/billing_statements/{}/mark_uncollectible", id.as_str()),
+                &(),
+            )
+            .await
+    }
 }
 
 /// Billing Statement Resource.
@@ -207,7 +215,7 @@ pub struct BillingStatement {
 
     /// The [PaymentIntent](https://docs.payrexhq.com/docs/api/payment_intents) resource created for the [`BillingStatement`].
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub payment_intent: Option<PaymentIntent>,
+    pub payment_intent: Option<OptionalPaymentIntent>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub setup_future_usage: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -215,14 +223,13 @@ pub struct BillingStatement {
     pub status: BillingStatementStatus,
     pub payment_settings: PaymentSettings,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub customer: Option<Customer>,
+    pub customer: Option<OptionalCustomer>,
 
     /// The time the resource was created and measured in seconds since the Unix epoch.
     pub created_at: Timestamp,
 
     /// The time the resource was updated and measured in seconds since the Unix epoch.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -264,7 +271,8 @@ pub struct CreateBillingStatement {
     /// This value is derived from the currency of the associated customer.
     pub currency: Currency,
 
-    pub payment_settings: PaymentSettings,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_settings: Option<PaymentSettings>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub billing_details_collection: Option<String>,
@@ -295,6 +303,9 @@ pub struct UpdateBillingStatement {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub payment_settings: Option<PaymentSettings>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub billing_details_collection: Option<String>,
+
     /// An arbitrary string attached to the billing statement and copied over to its payment
     /// intent. This is a useful reference when viewing the payment resources associated with the
     /// billing statement from the PayRex Dashboard.
@@ -311,23 +322,26 @@ pub struct UpdateBillingStatement {
     /// once the billing statement is finalized.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<Metadata>,
+
+    pub due_at: Option<Timestamp>,
 }
 
 impl CreateBillingStatement {
     #[must_use]
-    pub fn new(
-        customer_id: CustomerId,
-        currency: Currency,
-        payment_settings: PaymentSettings,
-    ) -> Self {
+    pub fn new(customer_id: CustomerId, currency: Currency) -> Self {
         Self {
             customer_id,
             currency,
-            payment_settings,
+            payment_settings: None,
             billing_details_collection: None,
             description: None,
             metadata: None,
         }
+    }
+
+    pub fn payment_settings(mut self, settings: PaymentSettings) -> Self {
+        self.payment_settings = Some(settings);
+        self
     }
 
     pub fn billing_details_collection(mut self, collection: impl Into<String>) -> Self {
@@ -357,6 +371,11 @@ impl UpdateBillingStatement {
         self
     }
 
+    pub fn billing_details_collection(mut self, collection: impl Into<String>) -> Self {
+        self.billing_details_collection = Some(collection.into());
+        self
+    }
+
     pub fn payment_settings(mut self, settings: PaymentSettings) -> Self {
         self.payment_settings = Some(settings);
         self
@@ -377,6 +396,7 @@ impl UpdateBillingStatement {
 mod tests {
     use super::*;
     use super::{BillingStatementStatus, PaymentSettings};
+    use crate::types::BillingStatementLineItemId;
     use crate::types::{
         BillingStatementId, Currency, CustomerId, Metadata, PaymentMethod, Timestamp,
     };
@@ -411,6 +431,7 @@ mod tests {
         let settings = PaymentSettings {
             payment_methods: vec![PaymentMethod::Card, PaymentMethod::GCash],
         };
+
         let json = serde_json::to_value(&settings).unwrap();
         let methods = json["payment_methods"].as_array().unwrap();
         assert_eq!(methods[0].as_str().unwrap(), "card");
@@ -425,18 +446,17 @@ mod tests {
         let settings = PaymentSettings {
             payment_methods: vec![PaymentMethod::QRPh],
         };
-        let params = CreateBillingStatement::new(
-            CustomerId::new_unchecked("cus_001"),
-            Currency::PHP,
-            settings.clone(),
-        )
-        .billing_details_collection("always")
-        .description("desc")
-        .metadata(metadata.clone());
+
+        let params =
+            CreateBillingStatement::new(CustomerId::new_unchecked("cus_001"), Currency::PHP)
+                .payment_settings(settings.clone())
+                .billing_details_collection("always")
+                .description("desc")
+                .metadata(metadata.clone());
 
         assert_eq!(params.customer_id.as_str(), "cus_001");
         assert_eq!(params.currency, Currency::PHP);
-        assert_eq!(params.payment_settings, settings);
+        assert_eq!(params.payment_settings, Some(settings));
         assert_eq!(params.billing_details_collection.as_deref(), Some("always"));
         assert_eq!(params.description.as_deref(), Some("desc"));
         assert_eq!(params.metadata.unwrap().get("k"), Some("v"));
@@ -450,6 +470,7 @@ mod tests {
         let settings = PaymentSettings {
             payment_methods: vec![PaymentMethod::Maya],
         };
+
         let params = UpdateBillingStatement::new()
             .customer_id(CustomerId::new_unchecked("cus_002"))
             .payment_settings(settings.clone())
@@ -467,11 +488,23 @@ mod tests {
     fn test_billing_statement_serialization() {
         let mut metadata = Metadata::new();
         metadata.insert("foo", "bar");
+
         let settings = PaymentSettings {
             payment_methods: vec![PaymentMethod::QRPh],
         };
+
+        let item = BillingStatementLineItem {
+            id: BillingStatementLineItemId::new("bstm_li_1"),
+            description: Some("Test item".to_string()),
+            unit_price: 1500,
+            quantity: 2,
+            billing_statement_id: BillingStatementId::new("bstm_123"),
+            livemode: false,
+            created_at: Timestamp::from_unix(1_620_003_000),
+            updated_at: Timestamp::from_unix(1_620_003_000),
+        };
         let stmt = BillingStatement {
-            id: BillingStatementId::new_unchecked("bs_123"),
+            id: BillingStatementId::new("bstm_123"),
             amount: 2000,
             billing_details_collection: Some("mandatory".to_string()),
             currency: Currency::PHP,
@@ -482,7 +515,7 @@ mod tests {
             billing_statement_merchant_name: Some("Shop".to_string()),
             billing_statement_number: Some("BS100".to_string()),
             billing_statement_url: Some("http://example.com".to_string()),
-            line_items: Some(vec![Metadata::with_pair("item", "1")]),
+            line_items: Some(vec![item.clone()]),
             livemode: false,
             metadata: Some(metadata.clone()),
             payment_intent: None,
@@ -492,10 +525,11 @@ mod tests {
             payment_settings: settings.clone(),
             customer: None,
             created_at: Timestamp::from_unix(1_620_000_000),
-            updated_at: Some(Timestamp::from_unix(1_620_001_000)),
+            updated_at: Timestamp::from_unix(1_620_001_000),
         };
+
         let json = serde_json::to_value(&stmt).unwrap();
-        assert_eq!(json["id"], "bs_123");
+        assert_eq!(json["id"], "bstm_123");
         assert_eq!(json["amount"], 2000);
         assert_eq!(json["billing_details_collection"], "mandatory");
         assert_eq!(json["currency"], "PHP");
@@ -504,8 +538,16 @@ mod tests {
         assert_eq!(json["due_at"], 1_620_002_000);
         assert_eq!(json["billing_statement_number"], "BS100");
         assert_eq!(json["billing_statement_url"], "http://example.com");
+
         let items = json["line_items"].as_array().unwrap();
-        assert_eq!(items[0]["item"], "1");
+        assert_eq!(items[0]["id"], "bstm_li_1");
+        assert_eq!(items[0]["description"], "Test item");
+        assert_eq!(items[0]["unit_price"], 1500);
+        assert_eq!(items[0]["quantity"], 2);
+        assert_eq!(items[0]["billing_statement_id"], "bstm_123");
+        assert_eq!(items[0]["livemode"], false);
+        assert_eq!(items[0]["created_at"], 1_620_003_000);
+        assert_eq!(items[0]["updated_at"], 1_620_003_000);
         assert_eq!(json["livemode"], false);
         assert_eq!(json["metadata"]["foo"], "bar");
         assert_eq!(json["setup_future_usage"], "on_session");
