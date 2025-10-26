@@ -62,8 +62,7 @@ pub struct BillingStatementLineItem {
     pub billing_statement_id: BillingStatementId,
     pub livemode: bool,
     pub created_at: Timestamp,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub updated_at: Option<Timestamp>,
+    pub updated_at: Timestamp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -161,7 +160,7 @@ mod tests {
             billing_statement_id: BillingStatementId::new("bstm_1"),
             livemode: false,
             created_at: Timestamp::from_unix(1_621_000_000),
-            updated_at: Some(Timestamp::from_unix(1_621_000_100)),
+            updated_at: Timestamp::from_unix(1_621_000_100),
         };
         let json = serde_json::to_value(&item).unwrap();
         assert_eq!(json["id"], "bstm_li_1");

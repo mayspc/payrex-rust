@@ -175,7 +175,7 @@ mod tests {
         metadata.insert("key", "value");
 
         let refund = Refund {
-            id: RefundId::new_unchecked("ref_123"),
+            id: RefundId::new("re_123"),
             amount: 1000,
             currency: Currency::PHP,
             livemode: false,
@@ -183,7 +183,7 @@ mod tests {
             description: Some("desc".to_string()),
             reason: RefundReason::Fraudulent,
             remarks: Some("note".to_string()),
-            payment_id: PaymentId::new_unchecked("pay_456"),
+            payment_id: PaymentId::new("pay_456"),
             metadata: Some(metadata.clone()),
             created_at: Timestamp::from_unix(1_620_000_000),
             updated_at: Timestamp::from_unix(1_620_001_000),
@@ -191,7 +191,7 @@ mod tests {
 
         let json = serde_json::to_value(&refund).unwrap();
 
-        assert_eq!(json["id"], "ref_123");
+        assert_eq!(json["id"], "re_123");
         assert_eq!(json["amount"], 1000);
         assert_eq!(json["currency"], "PHP");
         assert_eq!(json["livemode"], false);
@@ -211,7 +211,7 @@ mod tests {
         metadata.insert("order", "1");
 
         let params = CreateRefund::new(
-            PaymentId::new_unchecked("pay_abc"),
+            PaymentId::new("pay_abc"),
             123,
             Currency::PHP,
             RefundReason::WrongProductReceived,

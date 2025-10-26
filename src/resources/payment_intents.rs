@@ -213,6 +213,109 @@ pub struct PaymentIntent {
     pub updated_at: Timestamp,
 }
 
+/// All fields in this struct are optional since fields nested under billing statements have
+/// optional fields. Hence, this should not be used for regular payment intent routes.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OptionalPaymentIntent {
+    /// Unique identifier for the resource. The prefix is `pi_`.
+    pub id: PaymentIntentId,
+
+    /// The amount to be collected by the [`PaymentIntent`]. This is a positive integer that your
+    /// customer will pay in the smallest currency unit, cents. If the customer should pay ₱
+    /// 120.50, the amount of the [`PaymentIntent`] should be 12050.
+    ///
+    /// The minimum amount is ₱ 20 (2000 in cents) and the maximum amount is ₱ 59,999,999.99
+    /// (5999999999 in cents).
+    pub amount: Option<i64>,
+
+    /// The amount already collected by the [`PaymentIntent`]. This is a positive integer that your
+    /// customer paid in the smallest currency unit, cents. If the customer paid ₱ 120.50, the
+    /// `amount_received` of the [`PaymentIntent`] should be 12050.
+    ///
+    /// The minimum amount is ₱ 20 (2000 in cents) and the maximum amount is ₱ 59,999,999.99
+    /// (5999999999 in cents).
+    pub amount_received: Option<i64>,
+
+    /// The amount that can be captured by the [`PaymentIntent`]. This is a positive integer that your
+    /// customer authorized in the smallest currency unit, cents. If the customer authorized ₱
+    /// 120.50, the `amount_capturable` of the [`PaymentIntent`] should be 12050.
+    ///
+    /// The minimum amount is ₱ 20 (2000 in cents) and the maximum amount is ₱ 59,999,999.99
+    /// (5999999999 in cents).
+    pub amount_capturable: Option<i64>,
+
+    ///The client secret of this [`PaymentIntent`] used for client-side retrieval using a public API
+    ///key. The client secret can be used to complete a payment from your client application.
+    pub client_secret: Option<String>,
+
+    /// A three-letter ISO currency code in uppercase. As of the moment, we only support PHP.
+    pub currency: Option<Currency>,
+
+    /// An arbitrary string attached to the [`PaymentIntent`]. Useful reference when viewing paid
+    /// Payment from PayRex Dashboard.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// The value is `true` if the resource's mode is live or the value is `false` if the resource mode is test.
+    pub livemode: Option<bool>,
+
+    /// A set of key-value pairs attached to the [`PaymentIntent`] and the resources created by the
+    /// [`PaymentIntent`], e.g., Payment. This is useful for storing additional information about the
+    /// [`PaymentIntent`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<Metadata>,
+
+    /// The `Payment` ID of the latest successful payment created by the [`PaymentIntent`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub latest_payment: Option<String>,
+
+    /// The error returned in case of a failed payment attempt.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_payment_error: Option<PaymentError>,
+
+    /// The latest `PaymentMethod` ID of attached to the [`PaymentIntent`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_method_id: Option<String>,
+
+    /// The list of payment methods allowed to be processed by the [`PaymentIntent`].
+    pub payment_methods: Option<Vec<String>>,
+
+    /// A set of key-value pairs that can modify the behavior of the payment method attached to the
+    /// payment intent.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub payment_method_options: Option<PaymentMethodOptions>,
+
+    /// Text that appears on the customer's bank statement. This value overrides the merchant
+    /// account's trade name. For information about requirements, including the 22-character limit,
+    /// see the [Statement
+    /// Descriptor](https://docs.payrexhq.com/docs/guide/developer_handbook/statement_descriptor)
+    /// guide.
+    pub statement_descriptor: Option<String>,
+
+    /// The latest status of the [`PaymentIntent`]. Possible values are `awaiting_payment_method`, `awaiting_next_action`, `processing`, or `succeeded`.
+    pub status: Option<PaymentIntentStatus>,
+
+    /// If this attribute is present, it tells you what actions you need to take so that your
+    /// customer can make a payment using the selected method.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub next_action: Option<NextAction>,
+
+    /// The URL where your customer will be redirected after completing the authentication if they
+    /// didn't exit or close their browser while authenticating.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub return_url: Option<String>,
+
+    /// The time by which the [`PaymentIntent`] must be captured to avoid being canceled.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capture_before_at: Option<Timestamp>,
+
+    /// The time the resource was created and measured in seconds since the Unix epoch.
+    pub created_at: Option<Timestamp>,
+
+    /// The time the resource was updated and measured in seconds since the Unix epoch.
+    pub updated_at: Option<Timestamp>,
+}
+
 /// The status of a [`PaymentIntent`] describes the current state of the payment process.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -236,7 +339,7 @@ pub enum PaymentIntentStatus {
     RequiresCapture,
 
     /// The payment was cancelled.
-    Cancelled,
+    Canceled,
 
     /// The payment was successful.
     Succeeded,

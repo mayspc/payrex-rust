@@ -77,7 +77,7 @@ define_id!(
 );
 define_id!(CheckoutSessionId, "cs_", "Checkout Session ID");
 define_id!(PaymentId, "pay_", "Payment ID");
-define_id!(RefundId, "ref_", "Refund ID");
+define_id!(RefundId, "re_", "Refund ID");
 define_id!(WebhookId, "wh_", "Webhook ID");
 define_id!(EventId, "evt_", "Event ID");
 define_id!(PayoutId, "po_", "Payout ID");
