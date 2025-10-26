@@ -46,7 +46,7 @@ impl CheckoutSessions {
 pub struct CheckoutSession {
     pub id: CheckoutSessionId,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub amount: Option<String>,
+    pub amount: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub customer_reference_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -95,8 +95,8 @@ pub struct CheckoutSessionLineItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<CheckoutSessionLineItemId>,
     pub name: String,
-    pub amount: String,
-    pub quantity: String,
+    pub amount: u64,
+    pub quantity: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -183,6 +183,30 @@ impl CreateCheckoutSession {
 
     pub fn metadata(mut self, metadata: Metadata) -> Self {
         self.metadata = Some(metadata);
+        self
+    }
+}
+
+impl CheckoutSessionLineItem {
+    #[must_use]
+    pub fn new(name: impl Into<String>, amount: u64, quantity: u64) -> Self {
+        Self {
+            id: None,
+            name: name.into(),
+            amount,
+            quantity,
+            description: None,
+            image: None,
+        }
+    }
+
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    pub fn image(mut self, image: impl Into<String>) -> Self {
+        self.image = Some(image.into());
         self
     }
 }

@@ -187,7 +187,7 @@ pub struct PaymentIntent {
     /// see the [Statement
     /// Descriptor](https://docs.payrexhq.com/docs/guide/developer_handbook/statement_descriptor)
     /// guide.
-    pub statement_descriptor: String,
+    pub statement_descriptor: Option<String>,
 
     /// The latest status of the [`PaymentIntent`]. Possible values are `awaiting_payment_method`, `awaiting_next_action`, `processing`, or `succeeded`.
     pub status: PaymentIntentStatus,
