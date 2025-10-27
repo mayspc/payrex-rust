@@ -8,8 +8,8 @@ use crate::{
     config::Config,
     http::HttpClient,
     resources::{
-        BillingStatementLineItems, BillingStatements, CheckoutSessions, Customers, Events,
-        PaymentIntents, Payments, Payouts, Refunds, Webhooks,
+        BillingStatementLineItems, BillingStatements, CheckoutSessions, Customers, PaymentIntents,
+        Payments, Payouts, Refunds, Webhooks,
     },
 };
 use std::sync::Arc;
@@ -93,11 +93,6 @@ impl Client {
     #[must_use]
     pub fn webhooks(&self) -> Webhooks {
         Webhooks::new(Arc::clone(&self.http))
-    }
-
-    #[must_use]
-    pub fn events(&self) -> Events {
-        Events::new(Arc::clone(&self.http))
     }
 
     #[must_use]

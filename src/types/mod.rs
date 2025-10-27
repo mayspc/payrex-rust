@@ -5,6 +5,7 @@
 
 pub mod common;
 pub mod currency;
+pub mod event;
 pub mod ids;
 pub mod metadata;
 pub mod pagination;
