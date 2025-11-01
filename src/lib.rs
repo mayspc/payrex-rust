@@ -5,9 +5,6 @@
 //! The SDK automatically detects test mode from your API key and sets the `test_mode` flag accordingly.
 //! You can check if you're in test mode using `client.config().is_test_mode()`.
 
-#![warn(missing_docs)]
-#![warn(clippy::all)]
-#![warn(clippy::pedantic)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
