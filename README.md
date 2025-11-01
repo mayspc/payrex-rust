@@ -8,7 +8,7 @@ Unofficial Rust SDK for [PayRex](https://payrexhq.com)
 ## Roadmap
 
 - [x] Foundations
-- [ ] APIs
+- [x] APIs
   - [x] Payment Intents
   - [x] Payments
   - [x] Customers
